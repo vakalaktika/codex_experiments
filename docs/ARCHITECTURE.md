@@ -17,6 +17,10 @@ No application code has been written yet.
 | Server logic | Supabase Edge Functions (Deno) | Two functions: `generate-prompt`, `github-proxy`. See §2. |
 | Offline | Workbox precache + IndexedDB outbox (`idb`) | Capture must work offline; everything else degrades to cached-read. |
 | Voice | Web Speech API (`webkitSpeechRecognition`) | Per the brief, with a hard fallback to text. See §7 for the iOS caveat. |
+| Hosting | GitHub Pages via GitHub Actions | Static host, HTTPS by default (required for SW + mic). See §6a. |
+
+**Deployed URL: `https://vakalaktika.github.io/codex_experiments/`** — a subpath, not
+a root. Every path in this document is written accordingly.
 
 ### 2. Where secrets live — the one non-negotiable
 
@@ -50,12 +54,17 @@ codex_experiments/
 ├── .env.example                     # VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY only
 ├── index.html                       # viewport-fit=cover, apple-* meta tags
 ├── package.json
-├── vite.config.ts                   # + VitePWA plugin config (see §6)
+├── vite.config.ts                   # base: '/codex_experiments/' + VitePWA (see §6)
 ├── tailwind.config.js
 ├── postcss.config.js
 ├── tsconfig.json
 │
+├── .github/
+│   └── workflows/
+│       └── deploy-pages.yml         # build + deploy to GitHub Pages (see §6a)
+│
 ├── public/
+│   ├── .nojekyll                    # stop Pages stripping _-prefixed asset files
 │   ├── icons/
 │   │   ├── icon-192.png
 │   │   ├── icon-512.png
@@ -293,13 +302,17 @@ action stays available on any note without a prompt.
 
 ### `public/manifest.webmanifest` (emitted by `vite-plugin-pwa`)
 
+Every path is prefixed with the repo subpath. A manifest with root-absolute
+paths installs but launches to a blank screen on Pages — this is the single
+most common way a subpath PWA breaks.
+
 ```jsonc
 {
   "name": "Idea Capture",
   "short_name": "Capture",
-  "id": "/",
-  "start_url": "/?source=pwa",
-  "scope": "/",
+  "id": "/codex_experiments/",
+  "start_url": "/codex_experiments/?source=pwa",
+  "scope": "/codex_experiments/",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0b0b0f",
@@ -307,23 +320,25 @@ action stays available on any note without a prompt.
   "description": "Capture raw ideas by voice or text and turn them into structured feature prompts.",
   "categories": ["productivity", "developer"],
   "icons": [
-    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
-    { "src": "/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+    { "src": "/codex_experiments/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/codex_experiments/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/codex_experiments/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    { "name": "New capture", "url": "/?new=1", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
-    { "name": "Projects", "url": "/projects" }
+    { "name": "New capture", "url": "/codex_experiments/?new=1", "icons": [{ "src": "/codex_experiments/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Projects", "url": "/codex_experiments/projects" }
   ],
   "screenshots": [
-    { "src": "/screenshots/capture-narrow.png", "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow" },
-    { "src": "/screenshots/project-wide.png", "sizes": "1920x1080", "type": "image/png", "form_factor": "wide" }
+    { "src": "/codex_experiments/screenshots/capture-narrow.png", "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow" },
+    { "src": "/codex_experiments/screenshots/project-wide.png", "sizes": "1920x1080", "type": "image/png", "form_factor": "wide" }
   ]
 }
 ```
 
-`start_url` is `/`, so the home-screen icon opens Capture with no intermediate
-navigation — the first requirement in the core flow.
+`start_url` is the app root, so the home-screen icon opens Capture with no
+intermediate navigation — the first requirement in the core flow. In practice
+`vite-plugin-pwa` derives these from Vite's `base`, so they stay correct if the
+repo is ever renamed or the app moves to its own domain.
 
 ### `index.html` head — the iOS-specific half
 
@@ -335,7 +350,7 @@ iOS ignores most of the manifest, so these are not optional:
 <meta name="apple-mobile-web-app-capable" content="yes" />
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
 <meta name="apple-mobile-web-app-title" content="Capture" />
-<link rel="apple-touch-icon" href="/icons/apple-touch-icon-180.png" />
+<link rel="apple-touch-icon" href="/codex_experiments/icons/apple-touch-icon-180.png" />
 <meta name="theme-color" content="#0b0b0f" />
 ```
 
@@ -345,12 +360,14 @@ button sits under the home indicator.
 ### Service worker (`vite.config.ts`)
 
 ```ts
-VitePWA({
+export default defineConfig({
+  base: '/codex_experiments/',       // must match the Pages subpath
+  plugins: [react(), VitePWA({
   registerType: 'prompt',          // never swap the SW mid-capture
   manifest: /* above */,
   workbox: {
     globPatterns: ['**/*.{js,css,html,woff2,png,svg}'],
-    navigateFallback: '/index.html',
+    navigateFallback: '/codex_experiments/index.html',
     navigateFallbackDenylist: [/^\/functions\//],
     runtimeCaching: [
       { // Supabase REST reads — stale data beats a spinner
@@ -372,12 +389,124 @@ VitePWA({
       },
     ],
   },
+  })],
 })
 ```
 
 Writes are never cached by the SW. Offline capture is handled explicitly by the
 IndexedDB outbox in `lib/outbox.ts`, not by background sync — Safari doesn't
 implement Background Sync, so the queue flushes on `online` + on app focus.
+
+React Router gets a matching `basename="/codex_experiments"` so in-app links
+resolve under the subpath.
+
+---
+
+## 6a. Hosting on GitHub Pages
+
+Pages is a good fit here: the app is a static bundle, all privileged work
+already lives in edge functions, and Pages serves HTTPS by default — which
+service workers and `getUserMedia` both require. Four things need handling.
+
+### 1. Deploy workflow
+
+`.github/workflows/deploy-pages.yml`, triggered on push to `main`, using the
+official Pages actions (no `gh-pages` branch, no committed `dist/`):
+
+```yaml
+name: Deploy to GitHub Pages
+on:
+  push: { branches: [main] }
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+        env:
+          VITE_SUPABASE_URL: ${{ vars.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ vars.VITE_SUPABASE_ANON_KEY }}
+      - uses: actions/upload-pages-artifact@v3
+        with: { path: dist }
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4
+```
+
+**One manual step you have to do yourself:** repo → Settings → Pages → Source →
+**GitHub Actions**. That toggle isn't exposed to me through the tools I have in
+this session, and the first deploy fails without it.
+
+### 2. SPA deep links (the Pages-specific gotcha)
+
+Pages has no rewrite rules, so a hard refresh on `/codex_experiments/projects`
+gets a genuine 404 from the CDN before the app ever loads. The service worker's
+`navigateFallback` covers this only on repeat visits, which makes it fail
+exactly for a link you open cold on your phone.
+
+Fix: the build copies `dist/index.html` → `dist/404.html`. Pages serves that for
+any unmatched path, React Router reads the URL, and the correct screen renders.
+One line in the build script, no redirect flash.
+
+### 3. Env vars are build-time and public
+
+Vite inlines `VITE_*` into the bundle, so anything there is readable by anyone.
+That's fine for exactly two values — the Supabase URL and the **anon** key,
+which are designed to be public and are guarded by the RLS policies in §4. I'd
+put them in repo *variables* rather than secrets, since masking a value that
+ships in the JS bundle only makes the CI logs harder to read.
+
+The Anthropic key and the GitHub PAT never enter this build. They stay as
+Supabase edge-function secrets, per §2 — a static host makes that decision
+non-negotiable rather than merely advisable.
+
+### 4. Supabase config for the Pages origin
+
+Two settings in the Supabase dashboard, or auth will fail only in production:
+
+- **Auth → URL Configuration:** Site URL `https://vakalaktika.github.io/codex_experiments/`,
+  plus that URL in Redirect Allow List. Magic links bounce to the site URL, and
+  a mismatch sends you to a blank root path.
+- **Edge functions CORS:** allow origin `https://vakalaktika.github.io`. Note
+  the origin has no path — every GitHub Pages site under this account shares it.
+
+### Worth flagging: the subpath is a papercut, not a blocker
+
+Hosting inside `codex_experiments` means the URL is
+`vakalaktika.github.io/codex_experiments/` and the PWA scope is that
+subdirectory. It works — installs, offline, and mic are all fine — but:
+
+- the home-screen URL is long and shares an origin with anything else you ever
+  publish under this account, so `localStorage`/`IndexedDB` are shared across
+  those apps;
+- this repo is described as "Experiments with Open AI Codex", so the app lives
+  under a name that doesn't describe it.
+
+Two cleaner options, both cheap to switch to later since `base` drives
+everything: a dedicated public repo (gives `/idea-capture/`), or a repo named
+`vakalaktika.github.io` (gives the origin root, shortest possible install URL).
+I'll proceed with the current repo unless you say otherwise.
 
 ---
 
@@ -404,9 +533,12 @@ implement Background Sync, so the queue flushes on `online` + on app focus.
 ## 8. Build order (once approved)
 
 1. Scaffold — Vite + Tailwind + router + PWA plugin, installable shell.
-2. Supabase — migration, RLS, magic-link auth, session persistence.
-3. Capture — text first, then mic, then the offline outbox.
-4. `generate-prompt` edge function + prompt editor + copy-to-clipboard.
-5. Projects list + project detail (Notes / Prompts tabs).
-6. `github-proxy` edge function + Issues / Repo Info tabs.
-7. Icons, screenshots, and an install pass on real iOS Safari + Android Chrome.
+2. Pages deploy — workflow + `404.html` fallback, shipped early so every later
+   step is verified on the real HTTPS origin instead of only on localhost.
+3. Supabase — migration, RLS, magic-link auth, session persistence.
+4. Capture — text first, then mic, then the offline outbox.
+5. `generate-prompt` edge function + prompt editor + copy-to-clipboard.
+6. Projects list + project detail (Notes / Prompts tabs).
+7. `github-proxy` edge function + Issues / Repo Info tabs.
+8. Icons, screenshots, and an install pass on real iOS Safari + Android Chrome,
+   installed from the live Pages URL.
