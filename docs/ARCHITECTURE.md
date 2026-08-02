@@ -11,7 +11,7 @@ No application code has been written yet.
 | Concern | Choice | Why |
 | --- | --- | --- |
 | Build | Vite + React 18 + TypeScript | Fastest path to a small PWA; `vite-plugin-pwa` wraps Workbox with almost no config. |
-| Styling | Tailwind CSS | Per the brief. Mobile-first utilities, safe-area plugin for iOS notch. |
+| Styling | Tailwind CSS v4 | Per the brief. v4 is CSS-first: tokens live in `src/index.css` via `@theme`, so there is no `tailwind.config.js` or `postcss.config.js`. |
 | Routing | React Router v6 | Capture is the index route so the home-screen shortcut lands there directly. |
 | Data | Supabase JS v2 (Postgres + Auth) | Per the brief. Row Level Security on every table even though it's single-user. |
 | Server logic | Supabase Edge Functions (Deno) | Two functions: `generate-prompt`, `github-proxy`. See §2. |
@@ -55,13 +55,15 @@ codex_experiments/
 ├── index.html                       # viewport-fit=cover, apple-* meta tags
 ├── package.json
 ├── vite.config.ts                   # base: '/codex_experiments/' + VitePWA (see §6)
-├── tailwind.config.js
-├── postcss.config.js
 ├── tsconfig.json
 │
 ├── .github/
 │   └── workflows/
 │       └── deploy-pages.yml         # build + deploy to GitHub Pages (see §6a)
+│
+├── scripts/
+│   ├── generate-icons.mjs           # one SVG source -> the whole icon set
+│   └── post-build.mjs               # dist/index.html -> dist/404.html
 │
 ├── public/
 │   ├── .nojekyll                    # stop Pages stripping _-prefixed asset files
@@ -327,13 +329,13 @@ most common way a subpath PWA breaks.
   "shortcuts": [
     { "name": "New capture", "url": "/codex_experiments/?new=1", "icons": [{ "src": "/codex_experiments/icons/icon-192.png", "sizes": "192x192" }] },
     { "name": "Projects", "url": "/codex_experiments/projects" }
-  ],
-  "screenshots": [
-    { "src": "/codex_experiments/screenshots/capture-narrow.png", "sizes": "1080x1920", "type": "image/png", "form_factor": "narrow" },
-    { "src": "/codex_experiments/screenshots/project-wide.png", "sizes": "1920x1080", "type": "image/png", "form_factor": "wide" }
   ]
 }
 ```
+
+`screenshots` is deferred to step 8: pointing the manifest at files that don't
+exist yet degrades the Android install prompt rather than enriching it, so the
+key goes in once there are real screenshots to reference.
 
 `start_url` is the app root, so the home-screen icon opens Capture with no
 intermediate navigation — the first requirement in the core flow. In practice

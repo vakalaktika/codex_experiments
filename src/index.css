@@ -1,0 +1,53 @@
+@import 'tailwindcss';
+
+/* Tailwind v4 is CSS-first: design tokens live here, not in a JS config. */
+@theme {
+  --color-ink: #0b0b0f;
+  --color-surface: #14141b;
+  --color-surface-2: #1d1d27;
+  --color-edge: #2a2a38;
+  --color-muted: #8b8b9e;
+  --color-accent: #7c5cff;
+  --color-accent-soft: #a58bff;
+}
+
+:root {
+  color-scheme: dark;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  background: var(--color-ink);
+  color: #f2f2f7;
+  /* Stop iOS from rubber-banding the whole page in standalone mode */
+  overscroll-behavior-y: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The mic button sits at the bottom of the screen; without this it lands
+   under the iPhone home indicator. */
+@utility pb-safe {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+@utility pt-safe {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+@keyframes pulse-ring {
+  0% {
+    box-shadow: 0 0 0 0 rgb(124 92 255 / 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 22px rgb(124 92 255 / 0);
+  }
+}
+
+.listening {
+  animation: pulse-ring 1.4s cubic-bezier(0.2, 0.6, 0.4, 1) infinite;
+}
