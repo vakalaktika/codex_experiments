@@ -13,8 +13,16 @@
       content="Capture raw ideas by voice or text and turn them into structured feature prompts."
     />
 
+    <!-- Without an explicit icon the browser requests /favicon.ico at the
+         ORIGIN root, which under a subpath is always a 404 (and on Pages is a
+         404 on someone else's path). Every icon href here is base-prefixed. -->
+    <link rel="icon" href="/codex_experiments/icons/icon-192.png" type="image/png" />
+
     <!-- iOS ignores most of the manifest, so these are not optional -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
+    <!-- The standards-track replacement; Chrome warns without it, older iOS
+         still needs the apple- prefixed one above, so both ship. -->
+    <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Capture" />
     <link rel="apple-touch-icon" href="/codex_experiments/icons/apple-touch-icon-180.png" />

@@ -38,6 +38,22 @@ export interface FeaturePrompt {
 }
 
 /**
+ * The subset of a GitHub issue the Issues tab renders. Shaped by the
+ * github-proxy edge function rather than mirroring GitHub's payload — the
+ * proxy drops pull requests and the many fields nothing here reads.
+ */
+export interface GithubIssue {
+  number: number
+  title: string
+  state: string
+  html_url: string
+  comments: number
+  updated_at: string
+  author: string | null
+  labels: Array<{ name: string; color: string }>
+}
+
+/**
  * A capture that has not reached Postgres yet. `client_id` is the idempotency
  * key the notes table uniquely indexes, so a retried flush after a flaky
  * reconnect updates rather than duplicates.
