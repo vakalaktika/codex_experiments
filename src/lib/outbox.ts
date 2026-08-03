@@ -68,6 +68,25 @@ export async function remove(clientId: string): Promise<void> {
   await (await db()).delete(STORE, clientId)
 }
 
+/**
+ * Record a failed flush so the entry can be backed off and, once it has failed
+ * enough times, surfaced rather than silently retried forever.
+ *
+ * A missing entry is not an error: a concurrent flush may already have synced
+ * and removed it.
+ */
+export async function markFailed(clientId: string, message: string): Promise<void> {
+  const database = await db()
+  const existing = (await database.get(STORE, clientId)) as QueuedNote | undefined
+  if (!existing) return
+
+  await database.put(STORE, {
+    ...existing,
+    attempts: existing.attempts + 1,
+    last_error: message,
+  })
+}
+
 export async function count(): Promise<number> {
   return (await db()).count(STORE)
 }
