@@ -213,7 +213,12 @@ export function assemble(text) {
       else if (MODE_SIZE[st.mode] === 3) { const v = ev(st.expr); bytes[o++] = v & 0xff; bytes[o++] = (v >> 8) & 0xff; }
     }
   });
-  return { origin, bank, bytes, labels: symbols, tables, checks, unresolved };
+  // One entry per label / instruction / data statement, for showing the code next to its bytes.
+  const listing = stmts.map((st) => ({
+    line: st.lineNo, addr: st.addr, kind: st.kind, name: st.kind === 'label' ? st.name : undefined,
+    size: st.kind === 'label' ? 0 : st.kind === 'byt' ? st.exprs.length : st.kind === 'word' ? st.exprs.length * 2 : MODE_SIZE[st.mode],
+  }));
+  return { origin, bank, bytes, labels: symbols, tables, checks, unresolved, listing };
 }
 
 // ---------------------------------------------------------------------------
