@@ -253,6 +253,12 @@
   #blob { width: 9cqmin; height: 9cqmin; border-radius: 50%; margin: -4.5cqmin; background: var(--pc); border: .8cqmin solid #fff; opacity: .9;
     transition: background-color var(--duration-fast) var(--ease-smooth-out); }
   #car { font-size: 11cqmin; }
+  #next { opacity: 0; transition: opacity var(--duration-quick) var(--ease-smooth-out); }
+  #next.is-shown { opacity: 1; transition: opacity var(--duration-very-slow) var(--ease-bounce); }
+  #next .spot { position: absolute; width: 15cqmin; height: 15cqmin; left: -7.5cqmin; top: -7.5cqmin; border-radius: 50%; background: var(--yellow);
+    border: 1cqmin solid #fff; box-shadow: 0 1cqmin 0 var(--shadow); }
+  #next.is-shown .spot { animation: glow 1.4s var(--ease-in-out) infinite; }
+  #next span { position: absolute; translate: -50% -50%; font-size: 8cqmin; line-height: 1; color: var(--ink); }
   #pots { position: absolute; left: 3cqmin; top: 50%; translate: 0 -50%; display: grid; gap: 2.4cqmin; }
   #pots .key { font-size: 4.4cqmin; opacity: .7; transition: transform var(--duration-very-slow) var(--ease-bounce), opacity var(--duration-fast) var(--ease-smooth-out); }
   #pots .key.is-on { transform: scale(1.45); opacity: 1; }
@@ -390,6 +396,7 @@
         <div class="papercard"></div>
         <canvas id="paint"></canvas>
         <div id="pots"><span class="key ky" data-b="y">Y</span><span class="key kx" data-b="x">X</span><span class="key kb" data-b="b">B</span><span class="key ka" data-b="a">A</span></div>
+        <div id="next" class="mover"><div class="spot"></div><span>▶</span></div>
         <div id="blob" class="mover"></div>
         <div id="car" class="mover"><span class="sticker">🚗</span></div>
       </div>
@@ -472,7 +479,7 @@
     <button id="go" type="button">👆 Start</button>
     <p id="padstatus"></p>
     <p>Grown-up: click Start once to turn on sound, then hand over the controller.</p>
-    <p class="keys">Your keys: Esc title · 1–5 jump to a level · 6 paint · M mute · − + volume · R rumble · K controller colour · L button layout · H shy friends. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Enter is +.</p>
+    <p class="keys">Your keys: Esc title · 1–5 jump to a level · 6 paint · N new picture · M mute · − + volume · R rumble · K controller colour · L button layout · H shy friends. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Enter is +.</p>
   </div>
   <div id="hud"></div>
   <svg class="grain" aria-hidden="true"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .24  0 0 0 0 .2  0 0 0 0 .32  0 0 0 .1 0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
@@ -623,6 +630,7 @@ addEventListener('keydown', e => {
   if ('12345'.includes(k)) startLevel(+k);
   else if (k === '6') startPaint();
   else if (k === 'Escape' || k === '0') goTitle();
+  else if (k === 'n') { if (G.screen === 'paint') { G.gen++; newPicture(); } }
   else if (k === 'r') G.rumble = !G.rumble;
   else if (k === 'm') { G.muted = !G.muted; setVolume(); }
   else if (k === '-' || k === '_') { G.volume = Math.max(0.1, G.volume - 0.1); setVolume(); }
@@ -642,7 +650,7 @@ function allowed() {
     case 'help': return new Set(['b']);
     case 'done': return new Set(['a']);
     case 'finale': return new Set(t > G.readyAt ? ['a'] : []);
-    case 'paint': return new Set(['a', 'b', 'x', 'y', 'du', 'dd', 'dl', 'dr', 'lsm', 'plus', 'minus']);
+    case 'paint': return new Set(['a', 'b', 'x', 'y', 'du', 'dd', 'dl', 'dr', 'lsm', 'minus']);
     case 'play':
       if (G.level <= 2) return new Set(FACE);
       if (G.level === 3) return new Set(['dl', 'dr', 'lsm', 'a']);
@@ -655,7 +663,7 @@ const CALLOUTS = {
   title: () => ({ plus: '▶', a: '?', y: G.paintUnlocked ? '🎨' : '🔒' }),
   help: () => ({ b: '✖' }), done: () => ({ a: '▶' }),
   finale: () => now() > G.readyAt ? { a: '🏠' } : {},
-  paint: () => ({ plus: '🔄', minus: '🏠' }),
+  paint: () => ({ minus: '🏠' }),
 };
 function refreshPad() {
   const al = allowed();
@@ -816,7 +824,7 @@ function updateDrive(cur, dt, t) {
 
 // ---------- paint: pick a colour with Y X B A, drive the car to fill the picture ----------
 const P = { cv: $('#paint'), layer: document.createElement('canvas'), mask: document.createElement('canvas'), tmp: document.createElement('canvas'),
-  parts: [], details: [], cells: [], total: 0, filled: 0, color: 'y', car: { x: .5, y: .5, face: 1 }, last: null, shape: -1, doneAt: 0, w: 0, h: 0, dpr: 1, brush: 20 };
+  parts: [], details: [], cells: [], next: { x: .9, y: .84 }, total: 0, filled: 0, color: 'y', car: { x: .5, y: .5, face: 1 }, last: null, shape: -1, doneAt: 0, w: 0, h: 0, dpr: 1, brush: 20 };
 const circ = (x, y, r) => { const p = new Path2D(); p.arc(x, y, r, 0, Math.PI * 2); return p; };
 const ell = (x, y, rx, ry, rot = 0) => { const p = new Path2D(); p.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); return p; };
 const poly = pts => { const p = new Path2D(); pts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y)); p.closePath(); return p; };
@@ -848,7 +856,7 @@ function paintResize() {
 function newPicture() {
   if (!paintResize()) return;
   let i; do { i = Math.floor(Math.random() * PICTURES.length); } while (i === P.shape);
-  P.shape = i; P.doneAt = 0; P.cv.classList.remove('is-done'); P.last = null;
+  P.shape = i; P.doneAt = 0; P.cv.classList.remove('is-done'); P.last = null; $('#next').classList.remove('is-shown');
   const pic = PICTURES[i](), s = Math.min(P.w * .36, P.h * .42);
   const m = new DOMMatrix().translate(P.w * .55, P.h * .5).rotate((Math.random() - .5) * 10).scale(s);
   const tr = p => { const q = new Path2D(); q.addPath(p, m); return q; };
@@ -876,7 +884,7 @@ function startPaint() {
 function updatePaint(cur, dt, t) {
   if (!P.total) return;
   const C = P.car, d = moveDir(cur);
-  if (!P.doneAt && (d.x || d.y)) {
+  if (d.x || d.y) {
     const n = Math.hypot(d.x, d.y), v = 0.32 * dt;
     C.x = Math.max(.04, Math.min(.96, C.x + d.x / n * v)); C.y = Math.max(.06, Math.min(.94, C.y + d.y / n * v * P.w / P.h));
     if (d.x) C.face = Math.sign(d.x);
@@ -885,13 +893,18 @@ function updatePaint(cur, dt, t) {
   if (!P.last || P.last.x !== x || P.last.y !== y || P.last.c !== P.color) {
     lc.setTransform(P.dpr, 0, 0, P.dpr, 0, 0); lc.lineCap = 'round'; lc.lineWidth = P.brush * 2; lc.strokeStyle = PAINT[P.color];
     lc.beginPath(); lc.moveTo(P.last ? P.last.x : x, P.last ? P.last.y : y); lc.lineTo(x, y + .01); lc.stroke();
-    for (const c of P.cells) if (!c.on && Math.hypot(c.x - x, c.y - y) < P.brush) { c.on = true; P.filled++; }
+    for (const c of P.cells) if (!c.on && Math.hypot(c.x - x, c.y - y) < P.brush * .6) { c.on = true; P.filled++; }
     P.last = { x, y, c: P.color };
-    if (!P.doneAt && P.filled >= P.total * .93) {
-      P.doneAt = t; P.cv.classList.add('is-done'); play('level'); rumble(0.3, 250); later(newPicture, 3500);
+    if (!P.doneAt && P.filled >= P.total) { // every bit is coloured: a "next" sign appears to drive to
+      P.doneAt = t; P.cv.classList.add('is-done'); play('level'); rumble(0.3, 250);
+      P.next = { x: .9, y: C.y < .5 ? .84 : .16 }; later(() => $('#next').classList.add('is-shown'), 900);
     }
   }
   const box = { width: P.w, height: P.h };
+  if (P.doneAt) {
+    place($('#next'), box, P.next.x, P.next.y);
+    if (t > P.doneAt + 900 && Math.hypot(P.next.x * P.w - x, P.next.y * P.h - y) < P.brush * 1.4) { play('go'); rumble(); G.gen++; newPicture(); return; }
+  }
   place($('#car'), box, C.x, C.y); place($('#blob'), box, C.x, C.y); $('#car').classList.toggle('flip', C.face > 0);
   // draw: white picture, paint clipped to it, ink outlines on top
   const c = P.cv.getContext('2d'), tc = P.tmp.getContext('2d');
@@ -904,6 +917,11 @@ function updatePaint(cur, dt, t) {
   c.setTransform(P.dpr, 0, 0, P.dpr, 0, 0); c.strokeStyle = '#3d3552'; c.lineJoin = c.lineCap = 'round';
   c.lineWidth = Math.max(4, P.brush * .16); P.parts.forEach(p => c.stroke(p));
   c.lineWidth = Math.max(3, P.brush * .11); P.details.forEach(p => c.stroke(p));
+  if (!P.doneAt && P.filled >= P.total * .8) { // nearly there: a soft ring shows a spot still to colour
+    const m = P.cells.find(k => !k.on);
+    if (m) { c.strokeStyle = '#3d3552'; c.globalAlpha = .35 + .3 * Math.sin(t / 250); c.lineWidth = 4; c.setLineDash([6, 8]);
+      c.beginPath(); c.arc(m.x, m.y, P.brush * .7, 0, Math.PI * 2); c.stroke(); c.setLineDash([]); c.globalAlpha = 1; }
+  }
 }
 
 // ---------- one press ----------
@@ -918,7 +936,7 @@ function onPress(n) {
     case 'done': if (t > G.readyAt) startCountdown(); break;
     case 'finale': goTitle(); break;
     case 'paint':
-      if (FACE.includes(n)) setColor(n); else if (n === 'plus') { play('pop'); G.gen++; newPicture(); } else if (n === 'minus') goTitle();
+      if (FACE.includes(n)) setColor(n); else if (n === 'minus') goTitle();
       break;
     case 'play':
       if (G.level <= 2) facePress(n, t);
