@@ -1,0 +1,408 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sleepy Friends</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #1d2440; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; cursor: none; }
+  #start {
+    position: fixed; inset: 0; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; gap: 18px;
+    background: #1d2440; color: #e9e6f5; text-align: center; padding: 24px;
+    font: 20px/1.5 system-ui, sans-serif;
+  }
+  #start h1 { font-size: 44px; margin: 0; font-weight: 600; }
+  #start button {
+    font: inherit; font-size: 24px; padding: 14px 36px; border-radius: 40px;
+    border: 0; background: #8fd6a8; color: #1d2440; cursor: pointer;
+  }
+  #start table { border-collapse: collapse; font-size: 16px; color: #b9b6d3; text-align: left; }
+  #start td { padding: 2px 12px; }
+  #start kbd {
+    background: #2e3760; border-radius: 6px; padding: 1px 8px; color: #e9e6f5;
+    font: 14px ui-monospace, monospace;
+  }
+  #hud {
+    position: fixed; left: 12px; bottom: 8px; color: #6f7399;
+    font: 13px system-ui, sans-serif; pointer-events: none;
+  }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="hud"></div>
+<div id="start">
+  <h1>😴 Sleepy Friends</h1>
+  <div>Grown-up: click to start, then hand over the controller.</div>
+  <button id="go">Start</button>
+  <table>
+    <tr><td><kbd>1</kbd></td><td>Wake up — any button wakes its friend</td></tr>
+    <tr><td><kbd>2</kbd></td><td>Who's peeking? — press the matching button</td></tr>
+    <tr><td><kbd>3</kbd></td><td>Drive — left and right only</td></tr>
+    <tr><td><kbd>4</kbd></td><td>Roam — drive in all four directions</td></tr>
+    <tr><td><kbd>R</kbd> <kbd>M</kbd> <kbd>-</kbd> <kbd>+</kbd></td><td>Rumble on/off, mute, volume</td></tr>
+    <tr><td><kbd>C</kbd></td><td>Button colours: Xbox / PlayStation / Switch</td></tr>
+    <tr><td><kbd>H</kbd></td><td>Shy friends on/off (they hide from button-mashing)</td></tr>
+    <tr><td><kbd>W A S D</kbd> + arrows</td><td>Play from the keyboard (to show him how)</td></tr>
+  </table>
+</div>
+<script>
+'use strict';
+// ---------- setup ----------
+const canvas = document.getElementById('c');
+const ctx = canvas.getContext('2d');
+const hud = document.getElementById('hud');
+let W = 0, H = 0, U = 1; // U = layout unit
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  W = innerWidth; H = innerHeight; U = Math.min(W, H) / 100;
+  canvas.width = W * dpr; canvas.height = H * dpr;
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+}
+addEventListener('resize', resize); resize();
+
+// Friends are tied to a COLOUR; a scheme maps button position -> colour so the
+// screen matches the controller in his hands.
+const FRIENDS = {
+  green:  { emoji: '🦖', fill: '#8fd6a8', sound: 'dino' },
+  red:    { emoji: '🚒', fill: '#f0a3a0', sound: 'siren' },
+  blue:   { emoji: '🐳', fill: '#9cc4f2', sound: 'whale' },
+  yellow: { emoji: '🚕', fill: '#f2dc8f', sound: 'beep' },
+  pink:   { emoji: '🐷', fill: '#f2b3d6', sound: 'oink' },
+};
+// positions: 0 bottom, 1 right, 2 left, 3 top (standard gamepad button order)
+const SCHEMES = {
+  Xbox:        ['green', 'red', 'blue', 'yellow'],
+  PlayStation: ['blue', 'red', 'pink', 'green'],
+  Switch:      ['yellow', 'red', 'green', 'blue'],
+};
+const SCHEME_NAMES = Object.keys(SCHEMES);
+const POS = [[0, 1], [1, 0], [-1, 0], [0, -1]]; // diamond offsets per position
+
+const S = {
+  started: false,
+  stage: 1,
+  scheme: 'Xbox', schemeLocked: false,
+  rumble: true, volume: 0.5, muted: false, shy: true,
+  busyUntil: 0,          // calm lock: one thing happens at a time
+  wake: [0, 0, 0, 0],    // per-friend animation start time (0 = asleep)
+  wakeKind: ['', '', '', ''],
+  target: -1,            // stage 2: who is peeking
+  stars: 0,
+  presses: [],           // recent press times, for mash detection
+  hiddenUntil: 0,        // shy: friend is hiding until the controller is quiet
+  lastPress: 0,
+  doneAt: 0,             // round-finished screen start time
+  truck: { x: 0.5, y: 0.5, face: 1 },
+  goal: null, goalColor: 'green', pickupAt: 0, drives: 0,
+  lastMoveAt: 0,
+};
+const STARS_PER_ROUND = 5;
+const now = () => performance.now();
+const friendAt = i => FRIENDS[SCHEMES[S.scheme][i]];
+
+// ---------- sound (all soft, low-passed, short) ----------
+let ac = null, master = null;
+function initAudio() {
+  ac = new (window.AudioContext || window.webkitAudioContext)();
+  const lp = ac.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2200;
+  master = ac.createGain(); setVolume();
+  lp.connect(master); master.connect(ac.destination);
+  master._in = lp;
+}
+function setVolume() { if (master) master.gain.value = S.muted ? 0 : S.volume * 0.5; }
+function tone(type, f0, f1, t0, dur, gain = 0.5, vibrato = 0) {
+  if (!ac) return;
+  const t = ac.currentTime + t0;
+  const o = ac.createOscillator(), g = ac.createGain();
+  o.type = type; o.frequency.setValueAtTime(f0, t);
+  o.frequency.exponentialRampToValueAtTime(f1, t + dur);
+  if (vibrato) {
+    const l = ac.createOscillator(), lg = ac.createGain();
+    l.frequency.value = vibrato; lg.gain.value = f0 * 0.08;
+    l.connect(lg); lg.connect(o.frequency); l.start(t); l.stop(t + dur);
+  }
+  g.gain.setValueAtTime(0, t);
+  g.gain.linearRampToValueAtTime(gain, t + Math.min(0.06, dur / 3));
+  g.gain.linearRampToValueAtTime(0, t + dur);
+  o.connect(g); g.connect(master._in); o.start(t); o.stop(t + dur + 0.02);
+}
+const SOUNDS = {
+  dino()    { tone('sawtooth', 150, 70, 0, 0.7, 0.35, 22); },
+  siren()   { tone('triangle', 660, 660, 0, 0.3, 0.35); tone('triangle', 495, 495, 0.3, 0.3, 0.35); tone('triangle', 660, 660, 0.6, 0.3, 0.35); },
+  whale()   { tone('sine', 220, 520, 0, 0.5, 0.5); tone('sine', 520, 260, 0.45, 0.5, 0.45); },
+  beep()    { tone('triangle', 440, 440, 0, 0.18, 0.35); tone('triangle', 440, 440, 0.28, 0.3, 0.35); },
+  oink()    { tone('sawtooth', 320, 220, 0, 0.16, 0.3); tone('sawtooth', 340, 220, 0.24, 0.2, 0.3); },
+  snore()   { tone('sine', 160, 110, 0, 0.35, 0.18); },
+  yay()     { [523, 659, 784].forEach((f, i) => tone('sine', f, f, i * 0.14, 0.3, 0.4)); },
+  hush()    { tone('sine', 300, 200, 0, 0.4, 0.15); },
+  lullaby() { [392, 523, 659, 523, 784, 659, 523].forEach((f, i) => tone('sine', f, f, i * 0.28, 0.4, 0.38)); },
+  step()    { tone('sine', 200, 180, 0, 0.06, 0.08); },
+};
+const play = name => SOUNDS[name] && SOUNDS[name]();
+
+// ---------- input ----------
+const prevButtons = {};
+let keyDir = { x: 0, y: 0 };
+const heldKeys = new Set();
+function rumble(strength = 0.25, ms = 140) {
+  if (!S.rumble) return;
+  for (const p of navigator.getGamepads ? navigator.getGamepads() : []) {
+    const a = p && p.vibrationActuator;
+    if (a && a.playEffect) a.playEffect('dual-rumble', { duration: ms, weakMagnitude: strength, strongMagnitude: strength * 0.6 }).catch(() => {});
+  }
+}
+function pollPads() {
+  const dir = { x: keyDir.x, y: keyDir.y };
+  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  for (const p of pads) {
+    if (!p) continue;
+    if (!S.schemeLocked) {
+      const id = p.id.toLowerCase();
+      if (/054c|dualsense|dualshock|playstation/.test(id)) S.scheme = 'PlayStation';
+      else if (/057e|nintendo|switch|joy-con/.test(id)) S.scheme = 'Switch';
+      S.schemeLocked = true;
+    }
+    const prev = prevButtons[p.index] || (prevButtons[p.index] = []);
+    for (let b = 0; b < 4 && b < p.buttons.length; b++) {
+      const down = p.buttons[b].pressed;
+      if (down && !prev[b]) onButton(b);
+      prev[b] = down;
+    }
+    const bt = i => p.buttons[i] && p.buttons[i].pressed;
+    if (bt(14)) dir.x -= 1; if (bt(15)) dir.x += 1;
+    if (bt(12)) dir.y -= 1; if (bt(13)) dir.y += 1;
+    const ax = p.axes[0] || 0, ay = p.axes[1] || 0;
+    if (Math.abs(ax) > 0.4) dir.x += Math.sign(ax);
+    if (Math.abs(ay) > 0.4) dir.y += Math.sign(ay);
+  }
+  dir.x = Math.max(-1, Math.min(1, dir.x)); dir.y = Math.max(-1, Math.min(1, dir.y));
+  return dir;
+}
+const KEY_BUTTON = { s: 0, d: 1, a: 2, w: 3 };
+addEventListener('keydown', e => {
+  if (!S.started) { if (e.key === 'Enter' || e.key === ' ') start(); return; }
+  const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
+  if (heldKeys.has(k)) return; heldKeys.add(k);
+  if (k in KEY_BUTTON) onButton(KEY_BUTTON[k]);
+  else if ('1234'.includes(k)) setStage(+k);
+  else if (k === 'r') { S.rumble = !S.rumble; flash('Rumble ' + (S.rumble ? 'on' : 'off')); }
+  else if (k === 'm') { S.muted = !S.muted; setVolume(); flash(S.muted ? 'Muted' : 'Sound on'); }
+  else if (k === '-' || k === '_') { S.volume = Math.max(0.1, S.volume - 0.1); setVolume(); flash('Volume ' + Math.round(S.volume * 10)); }
+  else if (k === '+' || k === '=') { S.volume = Math.min(1, S.volume + 0.1); setVolume(); flash('Volume ' + Math.round(S.volume * 10)); }
+  else if (k === 'h') { S.shy = !S.shy; flash('Shy friends ' + (S.shy ? 'on' : 'off')); }
+  else if (k === 'c') {
+    S.scheme = SCHEME_NAMES[(SCHEME_NAMES.indexOf(S.scheme) + 1) % SCHEME_NAMES.length];
+    S.schemeLocked = true; flash(S.scheme + ' colours');
+  }
+  updateKeyDir();
+});
+addEventListener('keyup', e => { heldKeys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key); updateKeyDir(); });
+function updateKeyDir() {
+  keyDir = {
+    x: (heldKeys.has('ArrowRight') ? 1 : 0) - (heldKeys.has('ArrowLeft') ? 1 : 0),
+    y: (heldKeys.has('ArrowDown') ? 1 : 0) - (heldKeys.has('ArrowUp') ? 1 : 0),
+  };
+}
+let flashText = '', flashUntil = 0;
+function flash(t) { flashText = t; flashUntil = now() + 1500; }
+
+// ---------- game logic ----------
+function setStage(n) {
+  S.stage = n; S.stars = 0; S.doneAt = 0; S.busyUntil = 0; S.hiddenUntil = 0;
+  S.wake = [0, 0, 0, 0]; S.target = -1; S.drives = 0; S.lastMoveAt = 0;
+  S.truck = { x: 0.5, y: n === 4 ? 0.5 : 0.62, face: 1 };
+  S.goal = null; S.pickupAt = 0;
+  if (n === 2) pickTarget();
+  if (n >= 3) placeGoal();
+  flash(['', 'Wake up', "Who's peeking?", 'Drive', 'Roam'][n]);
+}
+function pickTarget() {
+  let t; do { t = Math.floor(Math.random() * 4); } while (t === S.target);
+  S.target = t;
+}
+function placeGoal() {
+  const colors = SCHEMES[S.scheme];
+  S.goalColor = colors[Math.floor(Math.random() * 4)];
+  if (S.stage === 3) {
+    // first two always to the right, then alternate sides, always far from the truck
+    const right = S.drives < 2 ? true : S.truck.x < 0.5;
+    S.goal = { x: right ? 0.88 : 0.12, y: 0.62 };
+  } else {
+    let g; do { g = { x: 0.15 + Math.random() * 0.7, y: 0.2 + Math.random() * 0.6 }; }
+    while (Math.hypot(g.x - S.truck.x, g.y - S.truck.y) < 0.3);
+    S.goal = g;
+  }
+}
+function wakeFriend(i, kind, ms) {
+  S.wake[i] = now(); S.wakeKind[i] = kind; S.busyUntil = now() + ms;
+}
+function addStar() {
+  S.stars++;
+  if (S.stars >= STARS_PER_ROUND) { S.doneAt = now() + 900; setTimeout(() => play('lullaby'), 900); }
+}
+function onButton(i) {
+  if (!S.started) return;
+  const t = now();
+  S.presses.push(t); S.presses = S.presses.filter(p => t - p < 1000);
+  S.lastPress = t;
+  const mashing = S.presses.length >= 4;
+
+  if (S.doneAt) { // round finished: wait for the lullaby, then one calm press restarts
+    if (t > S.doneAt + 3500 && !mashing) setStage(S.stage);
+    return;
+  }
+  // Shy friends: mashing makes the peeking friend duck down until it is quiet.
+  if (S.shy && S.stage === 2 && mashing) {
+    if (t > S.hiddenUntil) play('hush');
+    S.hiddenUntil = t + 1200;
+    return;
+  }
+  if (t < S.busyUntil || t < S.hiddenUntil) return; // one thing at a time
+
+  if (S.stage === 1) {
+    wakeFriend(i, 'wake', 1300); play(friendAt(i).sound); rumble();
+  } else if (S.stage === 2) {
+    if (i === S.target) {
+      wakeFriend(i, 'wake', 1500); play(friendAt(i).sound); setTimeout(() => play('yay'), 700);
+      rumble(0.3, 200); addStar();
+      setTimeout(() => { if (S.stage === 2 && !S.doneAt) pickTarget(); }, 1500);
+    } else {
+      wakeFriend(i, 'snore', 600); play('snore');
+    }
+  } else { // driving stages: buttons just honk, calmly
+    S.busyUntil = t + 700; play('siren'); rumble(0.15, 100);
+  }
+}
+let lastStep = 0;
+function updateDrive(dir, dt) {
+  if (S.doneAt || S.pickupAt) return;
+  const speed = 0.28 * dt; // fraction of screen per second
+  if (S.stage === 3) dir = { x: dir.x, y: 0 };
+  if (dir.x || dir.y) {
+    const n = Math.hypot(dir.x, dir.y);
+    S.truck.x = Math.max(0.06, Math.min(0.94, S.truck.x + dir.x / n * speed));
+    S.truck.y = Math.max(0.16, Math.min(0.84, S.truck.y + dir.y / n * speed * (W / H)));
+    if (dir.x) S.truck.face = Math.sign(dir.x);
+    S.lastMoveAt = now();
+    if (now() - lastStep > 260) { play('step'); lastStep = now(); }
+  }
+  const dx = (S.truck.x - S.goal.x) * W, dy = (S.truck.y - S.goal.y) * H;
+  if (Math.hypot(dx, dy) < U * 11) {
+    S.pickupAt = now(); S.drives++;
+    play(FRIENDS[S.goalColor].sound); setTimeout(() => play('yay'), 700);
+    rumble(0.3, 200); addStar();
+    setTimeout(() => { S.pickupAt = 0; if (!S.doneAt) placeGoal(); }, 1600);
+  }
+}
+
+// ---------- drawing ----------
+function emoji(ch, x, y, size, alpha = 1, flip = false) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.translate(x, y); if (flip) ctx.scale(-1, 1);
+  ctx.font = `${size}px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif`;
+  ctx.textAlign = 'center'; ctx.textBaseline = 'middle'; ctx.fillText(ch, 0, 0); ctx.restore();
+}
+function circle(x, y, r, fill, alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = fill;
+  ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill(); ctx.restore();
+}
+function text(s, x, y, size, color = '#e9e6f5', alpha = 1) {
+  ctx.save(); ctx.globalAlpha = alpha; ctx.fillStyle = color;
+  ctx.font = `600 ${size}px system-ui, sans-serif`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillText(s, x, y); ctx.restore();
+}
+const ease = t => 1 - Math.pow(1 - Math.min(1, Math.max(0, t)), 3);
+
+function drawStars() {
+  for (let i = 0; i < STARS_PER_ROUND; i++)
+    emoji('⭐', W / 2 + (i - (STARS_PER_ROUND - 1) / 2) * U * 9, U * 8, U * 6, i < S.stars ? 1 : 0.15);
+}
+function drawDiamond(t) {
+  const cx = W / 2, cy = H / 2 + U * 3, gap = U * 25, r = U * 13.5;
+  const hiding = t < S.hiddenUntil;
+  for (let i = 0; i < 4; i++) {
+    const f = friendAt(i), x = cx + POS[i][0] * gap, y = cy + POS[i][1] * gap;
+    const age = S.wake[i] ? (t - S.wake[i]) / 1000 : 99;
+    const awake = S.wakeKind[i] === 'wake' && age < 1.3;
+    const snoring = S.wakeKind[i] === 'snore' && age < 0.6;
+    const peeking = S.stage === 2 && i === S.target && !hiding && !awake;
+    const breathe = 1 + Math.sin(t / 900 + i) * 0.015;
+    let glow = 0.42, scale = 0.62, fa = 0.5, bounce = 0;
+    if (peeking) { glow = 0.75 + Math.sin(t / 500) * 0.15; scale = 0.8; fa = 1; bounce = Math.sin(t / 400) * U; }
+    if (awake) {
+      const k = ease(age / 0.25) * (1 - ease((age - 1.0) / 0.3));
+      glow = 0.42 + 0.58 * k; scale = 0.62 + 0.5 * k; fa = 0.5 + 0.5 * k;
+      bounce = -Math.abs(Math.sin(age * 7)) * U * 2.5 * k;
+    }
+    circle(x, y, r * breathe * (awake ? 1.08 : 1), f.fill, glow);
+    const wob = snoring ? Math.sin(age * 30) * U * 0.8 : 0;
+    emoji(f.emoji, x + wob, y + bounce, r * 1.5 * scale, fa);
+    if (!awake && !peeking) emoji('💤', x + r * 0.55, y - r * 0.55, r * 0.4, snoring ? 1 : 0.5);
+  }
+  if (hiding) emoji('🤫', cx, cy, U * 12);
+}
+function drawDrive(t) {
+  const roam = S.stage === 4;
+  if (!roam) { // a soft road
+    ctx.fillStyle = '#2e3760'; ctx.fillRect(0, H * 0.62 + U * 5, W, U * 6);
+  }
+  const g = S.goal, f = FRIENDS[S.goalColor];
+  const tx = S.truck.x * W, ty = S.truck.y * H;
+  if (g) {
+    const gx = g.x * W, gy = g.y * H;
+    if (S.pickupAt) {
+      const k = ease((t - S.pickupAt) / 400);
+      circle(tx, ty - U * 12, U * 9, f.fill, 0.9);
+      emoji(f.emoji, tx, ty - U * 12 - Math.abs(Math.sin((t - S.pickupAt) / 130)) * U * 2, U * 11 * k);
+    } else {
+      circle(gx, gy, U * 10 * (1 + Math.sin(t / 500) * 0.04), f.fill, 0.7);
+      emoji(f.emoji, gx, gy + Math.sin(t / 400) * U, U * 11);
+      // gentle arrow hint toward the friend whenever the truck has been still a while
+      if (t - S.lastMoveAt > 2500) {
+        const a = Math.atan2(gy - ty, gx - tx), d = U * 14 + (t / 25) % (U * 6);
+        ctx.save(); ctx.translate(tx + Math.cos(a) * d, ty + Math.sin(a) * d); ctx.rotate(a);
+        ctx.globalAlpha = 0.5; ctx.fillStyle = '#e9e6f5'; ctx.beginPath();
+        ctx.moveTo(U * 3, 0); ctx.lineTo(-U * 2, -U * 2.5); ctx.lineTo(-U * 2, U * 2.5); ctx.fill(); ctx.restore();
+      }
+    }
+  }
+  // most vehicle emoji face left, so flip when driving right
+  emoji('🚚', tx, ty, U * 13, 1, S.truck.face > 0);
+}
+function drawDone(t) {
+  const k = ease((t - S.doneAt) / 1200);
+  ctx.save(); ctx.globalAlpha = k * 0.85; ctx.fillStyle = '#151a30'; ctx.fillRect(0, 0, W, H); ctx.restore();
+  emoji('🌙', W / 2, H * 0.3, U * 18, k);
+  const colors = SCHEMES[S.scheme];
+  colors.forEach((c, i) => emoji(FRIENDS[c].emoji, W / 2 + (i - 1.5) * U * 16, H * 0.58 + Math.sin(t / 600 + i) * U, U * 11, k));
+  text('All done! Night night.', W / 2, H * 0.78, U * 5, '#e9e6f5', k);
+  if (t > S.doneAt + 3500) text('one gentle press to play again', W / 2, H * 0.87, U * 2.6, '#b9b6d3', 0.8);
+}
+let last = now();
+function frame() {
+  const t = now(), dt = Math.min(0.05, (t - last) / 1000); last = t;
+  const dir = pollPads();
+  ctx.fillStyle = '#1d2440'; ctx.fillRect(0, 0, W, H);
+  if (S.started) {
+    if (S.stage >= 3) { updateDrive(dir, dt); drawDrive(t); } else drawDiamond(t);
+    if (S.stage >= 2) drawStars();
+    if (S.doneAt && t > S.doneAt) drawDone(t);
+    if (t < flashUntil) text(flashText, W - U * 16, H - U * 4, U * 2.6, '#b9b6d3', 0.9);
+    hud.textContent = `stage ${S.stage} · ${S.scheme} · rumble ${S.rumble ? 'on' : 'off'} · shy ${S.shy ? 'on' : 'off'}`;
+  }
+  requestAnimationFrame(frame);
+}
+function start() {
+  if (S.started) return;
+  initAudio(); S.started = true;
+  document.getElementById('start').style.display = 'none';
+  setStage(1);
+}
+document.getElementById('go').addEventListener('click', start);
+window.__game = { S, onButton, setStage }; // for testing
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>
