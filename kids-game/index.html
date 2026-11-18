@@ -45,6 +45,7 @@
     <tr><td><kbd>4</kbd></td><td>Roam — drive in all four directions</td></tr>
     <tr><td><kbd>R</kbd> <kbd>M</kbd> <kbd>-</kbd> <kbd>+</kbd></td><td>Rumble on/off, mute, volume</td></tr>
     <tr><td><kbd>C</kbd></td><td>Button letters and colours: Xbox-style (A at the bottom, as on 8BitDo) / PlayStation / Switch</td></tr>
+    <tr><td><kbd>L</kbd></td><td>Switch button layout, if the wrong friend wakes up</td></tr>
     <tr><td><kbd>H</kbd></td><td>Shy friends on/off (they hide from button-mashing)</td></tr>
     <tr><td><kbd>W A S D</kbd> + arrows</td><td>Play from the keyboard (to show him how)</td></tr>
   </table>
@@ -152,6 +153,13 @@ const play = name => SOUNDS[name] && SOUNDS[name]();
 
 // ---------- input ----------
 const prevButtons = {};
+// Which raw button index sits at bottom, right, left, top. Controllers the browser
+// does not recognise as "standard" (8BitDo in its non-Xbox mode, many generic pads)
+// number them A=0 B=1 X=3 Y=4.
+const LAYOUTS = { standard: [0, 1, 2, 3], alternate: [0, 1, 3, 4] };
+let layoutChoice = 'auto';
+const layoutFor = p => layoutChoice !== 'auto' ? layoutChoice : (p.mapping === 'standard' ? 'standard' : 'alternate');
+let layoutShown = 'standard';
 let keyDir = { x: 0, y: 0 };
 const heldKeys = new Set();
 let padBlocked = false, padCount = 0;
@@ -181,14 +189,23 @@ function pollPads() {
       S.schemeLocked = true;
     }
     const prev = prevButtons[p.index] || (prevButtons[p.index] = []);
-    for (let b = 0; b < 4 && b < p.buttons.length; b++) {
-      const down = p.buttons[b].pressed;
+    const lay = layoutFor(p); layoutShown = lay;
+    for (let b = 0; b < 4; b++) {
+      const raw = p.buttons[LAYOUTS[lay][b]];
+      const down = !!(raw && raw.pressed);
       if (down && !prev[b]) onButton(b);
       prev[b] = down;
     }
     const bt = i => p.buttons[i] && p.buttons[i].pressed;
     if (bt(14)) dir.x -= 1; if (bt(15)) dir.x += 1;
     if (bt(12)) dir.y -= 1; if (bt(13)) dir.y += 1;
+    if (lay === 'alternate' && p.axes.length > 9) { // D-pad arrives as a "hat" axis
+      const h = Math.round((p.axes[9] + 1) * 3.5); // 0 up, clockwise to 7 up-left, 8 = released
+      if (h >= 0 && h <= 7) {
+        if (h === 7 || h <= 1) dir.y -= 1; if (h >= 3 && h <= 5) dir.y += 1;
+        if (h >= 1 && h <= 3) dir.x += 1; if (h >= 5) dir.x -= 1;
+      }
+    }
     const ax = p.axes[0] || 0, ay = p.axes[1] || 0;
     if (Math.abs(ax) > 0.4) dir.x += Math.sign(ax);
     if (Math.abs(ay) > 0.4) dir.y += Math.sign(ay);
@@ -207,6 +224,10 @@ addEventListener('keydown', e => {
   else if (k === 'm') { S.muted = !S.muted; setVolume(); flash(S.muted ? 'Muted' : 'Sound on'); }
   else if (k === '-' || k === '_') { S.volume = Math.max(0.1, S.volume - 0.1); setVolume(); flash('Volume ' + Math.round(S.volume * 10)); }
   else if (k === '+' || k === '=') { S.volume = Math.min(1, S.volume + 0.1); setVolume(); flash('Volume ' + Math.round(S.volume * 10)); }
+  else if (k === 'l') {
+    layoutChoice = layoutShown === 'standard' ? 'alternate' : 'standard';
+    flash('Button layout: ' + layoutChoice);
+  }
   else if (k === 'h') { S.shy = !S.shy; flash('Shy friends ' + (S.shy ? 'on' : 'off')); }
   else if (k === 'c') {
     S.scheme = SCHEME_NAMES[(SCHEME_NAMES.indexOf(S.scheme) + 1) % SCHEME_NAMES.length];
@@ -412,7 +433,7 @@ function frame() {
     if (S.stage >= 2) drawStars();
     if (S.doneAt && t > S.doneAt) drawDone(t);
     if (t < flashUntil) text(flashText, W - U * 16, H - U * 4, U * 2.6, '#b9b6d3', 0.9);
-    hud.textContent = `stage ${S.stage} · ${S.scheme} · rumble ${S.rumble ? 'on' : 'off'} · shy ${S.shy ? 'on' : 'off'} · ${padStatus()}`;
+    hud.textContent = `stage ${S.stage} · ${S.scheme} · rumble ${S.rumble ? 'on' : 'off'} · shy ${S.shy ? 'on' : 'off'} · layout ${layoutShown} · ${padStatus()}`;
   }
   requestAnimationFrame(frame);
 }
