@@ -259,7 +259,8 @@
 
   /* level complete + countdown */
   .overlay { position: absolute; left: 3cqw; top: 14cqh; width: 54cqw; bottom: 5cqh; display: grid; place-items: center; z-index: 30; pointer-events: none; }
-  #done .papercard, #help .papercard { padding: 4cqmin 6cqmin; display: grid; gap: 2.5cqmin; justify-items: center; }
+  #done .papercard, #help .papercard { display: grid; }
+  #done .papercard { padding: 4cqmin 6cqmin; gap: 2.5cqmin; justify-items: center; }
   #done .row { display: flex; gap: 1.5cqmin; font-size: 9cqmin; }
   #done .party { font-size: 11cqmin; display: flex; gap: 2cqmin; }
   #done.is-open .party .sticker { animation: hop2 700ms var(--ease-in-out) infinite; }
@@ -285,17 +286,20 @@
     transition: transform var(--duration-fast) var(--ease-smooth-out), opacity var(--duration-fast) var(--ease-smooth-out); }
   #count .dots i.off { opacity: .2; transform: scale(.6); }
 
-  /* help: pictures only */
-  #help .papercard { gap: 1.4cqmin; padding: 3cqmin 5cqmin; }
-  #help .line { display: flex; align-items: center; gap: 1.4cqmin; font-size: 4.2cqmin; font-weight: 700; }
-  #help .line .sticker { font-size: 6cqmin; }
-  #help .to { color: var(--ink); opacity: .6; }
-  #help .cross { color: var(--wrong); font-size: 7cqmin; line-height: 1; }
-  #help .dpad { position: relative; width: 1.9em; height: 1.9em; }
-  #help .dpad::before, #help .dpad::after { content: ""; position: absolute; background: var(--ink); border-radius: .16em; }
+  /* help: three pictures, one idea each */
+  #help .papercard { gap: 5cqmin; padding: 6cqmin 9cqmin; justify-items: start; }
+  #help .line { display: grid; grid-template-columns: 15cqmin auto auto; align-items: center; justify-items: center; gap: 4cqmin; font-size: 6cqmin; font-weight: 700; }
+  #help .line .sticker { font-size: 11cqmin; }
+  #help .to { opacity: .45; }
+  #help .go { font-size: 9cqmin; line-height: 1; }
+  #help .line > .key { font-size: 6.5cqmin; }
+  #help .cluster { position: relative; width: 15cqmin; height: 15cqmin; }
+  #help .cluster .key { position: absolute; font-size: 3.4cqmin; translate: -50% -50%; }
+  #help .cluster .ky { left: 50%; top: 19%; } #help .cluster .kx { left: 19%; top: 50%; }
+  #help .cluster .kb { left: 81%; top: 50%; } #help .cluster .ka { left: 50%; top: 81%; }
+  #help .dpad { position: relative; width: 11cqmin; height: 11cqmin; }
+  #help .dpad::before, #help .dpad::after { content: ""; position: absolute; background: var(--ink); border-radius: 1.4cqmin; }
   #help .dpad::before { left: 34%; right: 34%; top: 0; bottom: 0; } #help .dpad::after { top: 34%; bottom: 34%; left: 0; right: 0; }
-  #help .stick { width: 1.5em; height: 1.5em; border-radius: 50%; background: var(--ink); border: .3em solid var(--ink-soft); }
-  #help small { font: 500 max(11px, 1.7cqmin)/1.4 var(--font-utility); color: var(--ink); text-align: center; max-width: 46cqw; }
 
   /* finale */
   #finale { display: grid; place-items: center; align-content: center; gap: 2cqh; z-index: 25; }
@@ -328,13 +332,13 @@
   #go:hover { transform: translateY(-.3cqmin); } #go:active { transform: translateY(.8cqmin); box-shadow: 0 .4cqmin 0 var(--shadow); }
   #go:focus-visible { outline: 4px solid var(--ink); outline-offset: 4px; }
   #boot p { margin: 0; font: 500 max(13px, 2.4cqmin)/1.4 var(--font-utility); color: var(--ink); text-align: center; max-width: 60ch; }
+  #boot p.keys { font-size: max(12px, 1.9cqmin); opacity: .8; }
   #hud { position: absolute; left: max(10px, env(safe-area-inset-left, 0px)); bottom: 6px; z-index: 55; font: 11px var(--font-utility); color: var(--ink); opacity: .55; pointer-events: none; }
 
   @container (aspect-ratio < 1.15) {
     #pad { width: 78cqw; --py: 20cqh; }
     #app:is([data-screen="play"], [data-screen="done"], [data-screen="count"], [data-screen="paint"], [data-screen="help"]) #pad { --px: 0cqw; --py: 29cqh; --ps: .72; }
     #topbar, #scene, .overlay { left: 4cqw; width: 92cqw; } #scene, .overlay { bottom: 44cqh; }
-    #help small { max-width: 84cqw; }
     .sun, .cloud { display: none; }
   }
   @media (prefers-reduced-motion: reduce) {
@@ -433,12 +437,9 @@
 
   <div id="help" class="overlay t-modal" role="dialog" aria-label="How to play">
     <div class="papercard">
-      <div class="line"><span class="key ky">Y</span><span class="key kx">X</span><span class="key kb">B</span><span class="key ka">A</span><span class="to">➜</span><span class="sticker">🦖</span><span class="sticker">⭐</span></div>
-      <div class="line"><span class="dpad"></span><span class="stick"></span><span class="to">➜</span><span class="sticker">🚚</span><span class="to">➜</span><span class="sticker">🐳</span></div>
-      <div class="line"><span class="sticker">⭐⭐⭐⭐⭐</span><span class="to">➜</span><span class="key ka">A</span><span class="to">➜</span><span>3 2 1</span></div>
-      <div class="line"><span class="key">+</span><span class="to">➜</span><span>▶</span><span class="to">&nbsp;</span><span class="cross">✖</span><span class="to">➜</span><span class="sticker">🙅</span></div>
-      <div class="line"><span class="sticker">🏆</span><span class="to">➜</span><span class="sticker">🎨</span><span class="key ky">Y</span><span class="key kx">X</span><span class="key kb">B</span><span class="key ka">A</span><span class="dpad"></span><span class="to">➜</span><span class="sticker">🚗</span></div>
-      <small>Grown-ups: Esc title · 1–5 jump to a level · 6 paint · M mute · − + volume · R rumble · K controller colour · L button layout · H shy friends. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Enter is +.</small>
+      <div class="line"><span class="cluster"><span class="key ky">Y</span><span class="key kx">X</span><span class="key kb">B</span><span class="key ka">A</span></span><span class="to">➜</span><span class="sticker">🦖</span></div>
+      <div class="line"><span class="dpad"></span><span class="to">➜</span><span class="sticker">🚚</span></div>
+      <div class="line"><span class="key">+</span><span class="to">➜</span><span class="go">▶</span></div>
     </div>
   </div>
 
@@ -467,10 +468,11 @@
   </section>
 
   <div id="boot">
-    <h1 class="logo" style="font-size:9cqmin"><i style="--lc:var(--blue)">Sleepy Friends</i></h1>
+    <h1 class="logo" style="font-size:9cqmin"><i style="--lc:var(--ink)">Sleepy Friends</i></h1>
     <button id="go" type="button">👆 Start</button>
     <p id="padstatus"></p>
     <p>Grown-up: click Start once to turn on sound, then hand over the controller.</p>
+    <p class="keys">Your keys: Esc title · 1–5 jump to a level · 6 paint · M mute · − + volume · R rumble · K controller colour · L button layout · H shy friends. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Enter is +.</p>
   </div>
   <div id="hud"></div>
   <svg class="grain" aria-hidden="true"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .24  0 0 0 0 .2  0 0 0 0 .32  0 0 0 .1 0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
