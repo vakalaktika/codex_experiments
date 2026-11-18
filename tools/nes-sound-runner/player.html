@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NES Sound Runner</title>
+<style>
+  :root { color-scheme: light dark; --bg: #f6f6f3; --fg: #1c1c1a; --muted: #66665f; --line: #d5d5cf; --accent: #2456c8; }
+  @media (prefers-color-scheme: dark) { :root { --bg: #161615; --fg: #ecece7; --muted: #a0a099; --line: #3a3a36; --accent: #8fb0ff; } }
+  body { margin: 0; padding: 24px 16px; background: var(--bg); color: var(--fg); font: 16px/1.5 system-ui, sans-serif; }
+  main { max-width: 640px; margin: 0 auto; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p { color: var(--muted); margin: 0 0 16px; }
+  label { display: block; font-weight: 600; margin: 16px 0 6px; }
+  select, input, button { font: inherit; max-width: 100%; }
+  select { width: 100%; padding: 8px; }
+  button { padding: 8px 16px; margin-top: 16px; }
+  audio { width: 100%; margin-top: 16px; }
+  pre { white-space: pre-wrap; border-top: 1px solid var(--line); padding-top: 12px; margin-top: 20px; color: var(--muted); font-size: 13px; }
+  a { color: var(--accent); }
+</style>
+</head>
+<body>
+<main>
+  <h1>NES Sound Runner</h1>
+  <p>Assembles a 6502 sound-engine source file and runs it on an emulated NES CPU and audio chip. Nothing is uploaded; it all runs in this page.</p>
+  <label for="file">Source file (for example <code>mm2music.txt</code>)</label>
+  <input id="file" type="file" accept=".txt,.asm,.s,text/plain">
+  <label for="song">Song or sound effect</label>
+  <select id="song" disabled></select>
+  <label for="seconds">Maximum length in seconds</label>
+  <input id="seconds" type="number" min="1" max="600" value="90">
+  <div><button id="run" disabled>Run</button></div>
+  <audio id="audio" controls hidden></audio>
+  <div><a id="save" hidden>Save as WAV</a></div>
+  <pre id="log">Choose a source file to begin.</pre>
+</main>
+<script type="module">
+import { assemble, listSounds, render, encodeWav } from './core.js';
+const $ = (id) => document.getElementById(id);
+let program = null, sounds = [];
+const log = (t) => { $('log').textContent = t; };
+$('file').addEventListener('change', async (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  try {
+    program = assemble(await file.text());
+    sounds = listSounds(program);
+    $('song').replaceChildren(...sounds.map((s) => new Option(`${s.index}  ${s.name}${s.note ? ' — ' + s.note : ''}`, s.index)));
+    $('song').disabled = $('run').disabled = !sounds.length;
+    const c = program.checks;
+    log(`Assembled ${program.bytes.length} bytes at $${program.origin.toString(16).toUpperCase()}.\n`
+      + `${c.total - c.mismatches.length} of ${c.total} address annotations in the source match.\n`
+      + (sounds.length ? `${sounds.length} songs and sound effects found.` : 'No song table (MusicAndSfxTable) found in this source.'));
+  } catch (err) { program = null; $('song').disabled = $('run').disabled = true; log('Could not assemble: ' + err.message); }
+});
+$('run').addEventListener('click', () => {
+  const s = sounds[Number($('song').value)];
+  log(`Running ${s.name}…`);
+  setTimeout(() => {
+    try {
+      const r = render(program, s.index, { seconds: Number($('seconds').value) || 90 });
+      const url = URL.createObjectURL(new Blob([encodeWav(r.samples, r.sampleRate)], { type: 'audio/wav' }));
+      $('audio').src = url; $('audio').hidden = false; $('audio').play().catch(() => {});
+      $('save').href = url; $('save').download = s.name + '.wav'; $('save').hidden = false;
+      log(`${s.name}: ${(r.samples.length / r.sampleRate).toFixed(1)} s, ${r.ended ? 'played to its end' : 'loops, so it was faded out'}.`);
+    } catch (err) { log('Run failed: ' + err.message); }
+  }, 20);
+});
+</script>
+</body>
+</html>
