@@ -36,6 +36,7 @@
 <div id="start">
   <h1>😴 Sleepy Friends</h1>
   <div>Grown-up: click to start, then hand over the controller.</div>
+  <div id="padstatus"></div>
   <button id="go">Start</button>
   <table>
     <tr><td><kbd>1</kbd></td><td>Wake up — any button wakes its friend</td></tr>
@@ -147,18 +148,26 @@ const play = name => SOUNDS[name] && SOUNDS[name]();
 const prevButtons = {};
 let keyDir = { x: 0, y: 0 };
 const heldKeys = new Set();
+let padBlocked = false, padCount = 0;
+function getPads() {
+  try { return navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : []; }
+  catch (e) { padBlocked = true; return []; }
+}
+function padStatus() {
+  if (padBlocked) return '🚫 This page is not allowed to read controllers. Use the downloaded file instead.';
+  return padCount ? '🎮 Controller connected' : '🎮 No controller seen yet. Press any button on it.';
+}
 function rumble(strength = 0.25, ms = 140) {
   if (!S.rumble) return;
-  for (const p of navigator.getGamepads ? navigator.getGamepads() : []) {
+  for (const p of getPads()) {
     const a = p && p.vibrationActuator;
     if (a && a.playEffect) a.playEffect('dual-rumble', { duration: ms, weakMagnitude: strength, strongMagnitude: strength * 0.6 }).catch(() => {});
   }
 }
 function pollPads() {
   const dir = { x: keyDir.x, y: keyDir.y };
-  const pads = navigator.getGamepads ? navigator.getGamepads() : [];
+  const pads = getPads(); padCount = pads.length;
   for (const p of pads) {
-    if (!p) continue;
     if (!S.schemeLocked) {
       const id = p.id.toLowerCase();
       if (/054c|dualsense|dualshock|playstation/.test(id)) S.scheme = 'PlayStation';
@@ -385,12 +394,13 @@ function frame() {
   const t = now(), dt = Math.min(0.05, (t - last) / 1000); last = t;
   const dir = pollPads();
   ctx.fillStyle = '#1d2440'; ctx.fillRect(0, 0, W, H);
+  if (!S.started) document.getElementById('padstatus').textContent = padStatus();
   if (S.started) {
     if (S.stage >= 3) { updateDrive(dir, dt); drawDrive(t); } else drawDiamond(t);
     if (S.stage >= 2) drawStars();
     if (S.doneAt && t > S.doneAt) drawDone(t);
     if (t < flashUntil) text(flashText, W - U * 16, H - U * 4, U * 2.6, '#b9b6d3', 0.9);
-    hud.textContent = `stage ${S.stage} · ${S.scheme} · rumble ${S.rumble ? 'on' : 'off'} · shy ${S.shy ? 'on' : 'off'}`;
+    hud.textContent = `stage ${S.stage} · ${S.scheme} · rumble ${S.rumble ? 'on' : 'off'} · shy ${S.shy ? 'on' : 'off'} · ${padStatus()}`;
   }
   requestAnimationFrame(frame);
 }
