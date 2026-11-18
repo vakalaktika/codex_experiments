@@ -110,7 +110,6 @@
     --px: 0cqw; --py: 21cqh; --ps: .88;
     transform: translate(-50%, -50%) translate(var(--px), var(--py)) scale(var(--ps));
     transition: transform var(--duration-very-slow) var(--ease-smooth-out), opacity var(--duration-fast) var(--ease-smooth-out); }
-  #app[data-screen="boot"] #pad { opacity: 0; }
   #app:is([data-screen="play"], [data-screen="done"], [data-screen="count"], [data-screen="paint"], [data-screen="help"]) #pad { --px: 28cqw; --py: 6cqh; --ps: .8; }
   #app[data-screen="finale"] #pad { --px: 34cqw; --py: 28cqh; --ps: .5; }
   #padsvg { display: block; width: 100%; overflow: visible; filter: drop-shadow(0 1.2cqmin 0 var(--shadow)); }
@@ -124,11 +123,11 @@
   }
   /* editions of the 8BitDo Ultimate 3C+ */
   #pad { --c-body: #f0efed; --c-edge: #d9d7d3; --c-btn: #b5b3b0; --c-btn-edge: #9b9996; --c-letter: #f6f5f3;
-    --c-ring: #cfcdc9; --c-well: #dedcd8; --c-bump: #c9c7c3; --c-mark: #8f8d89; }
+    --c-ring: #cfcdc9; --c-well: #dedcd8; --c-bump: #c9c7c3; --c-mark: #8f8d89; --c-small: #e3e2df; --c-small-edge: #cfcdc9; }
   #pad[data-edition="black"] { --c-body: #2c2c30; --c-edge: #1b1b1e; --c-btn: #1d1d20; --c-btn-edge: #0f0f11; --c-letter: #e9e9ec;
-    --c-ring: #8b8b90; --c-well: #232326; --c-bump: #d0d0d2; --c-mark: #8c8c92; }
-  #pad[data-edition="green"] { --c-body: #62793f; --c-edge: #4e6331; --c-btn: #bcd65c; --c-btn-edge: #9ab848; --c-letter: #55702f;
-    --c-ring: #74492c; --c-well: #566c36; --c-bump: #8a4f2c; --c-mark: #46592c; }
+    --c-ring: #8b8b90; --c-well: #232326; --c-bump: #d0d0d2; --c-mark: #a0a0a6; --c-small: #1f1f22; --c-small-edge: #101012; }
+  #pad[data-edition="green"] { --c-body: #5d7440; --c-edge: #495d31; --c-btn: #b9d35a; --c-btn-edge: #98b545; --c-letter: #4f6a2c;
+    --c-ring: #6e4428; --c-well: #536839; --c-bump: #7d4526; --c-mark: #a9c46a; --c-small: #556b3a; --c-small-edge: #465a2f; }
   #padsvg .body { fill: var(--c-body); stroke: var(--c-edge); stroke-width: 2.5; }
   #padsvg .grip { fill: var(--c-edge); opacity: .35; }
   #padsvg .bump path, #padsvg .trig rect { fill: var(--c-bump); stroke: var(--c-edge); stroke-width: 1.5; }
@@ -136,6 +135,8 @@
   #padsvg .ring { fill: var(--c-ring); stroke: var(--c-edge); stroke-width: 1; }
   #padsvg .cap { fill: var(--c-btn); stroke: var(--c-btn-edge); stroke-width: 1.5; }
   #padsvg .dimple { fill: var(--c-btn-edge); opacity: .45; }
+  #padsvg .cap.small { fill: var(--c-small); stroke: var(--c-small-edge); }
+  #padsvg .arm .mark { stroke: var(--c-btn-edge); }
   #padsvg text.lt { fill: var(--c-letter); font: 700 15px var(--font-display); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
   #padsvg .mark { fill: none; stroke: var(--c-mark); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
   #padsvg .led { fill: #fff; stroke: #9be7ff; stroke-width: 2; }
@@ -327,18 +328,9 @@
   #finale.is-on .confetti i { animation: fall var(--d) var(--ease-linear) var(--w) infinite; }
   @keyframes fall { to { transform: translateY(115cqh) rotate(var(--rot)); } }
 
-  /* boot + grown-up strip */
-  #boot { position: absolute; inset: 0; z-index: 60; display: grid; place-items: center; align-content: center; gap: 3cqh; background: var(--sky);
-    padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px));
-    transition: opacity var(--duration-fast) var(--ease-smooth-out), visibility 0s linear var(--duration-fast); }
-  #app:not([data-screen="boot"]) #boot { opacity: 0; visibility: hidden; }
-  #go { font: 700 7cqmin var(--font-display); color: var(--ink); background: var(--yellow); border: 1cqmin solid #fff; border-radius: 99px;
-    padding: 2.5cqmin 7cqmin; box-shadow: 0 1.2cqmin 0 var(--shadow); cursor: pointer;
-    transition: transform var(--duration-quick) var(--ease-smooth-out), box-shadow var(--duration-quick) var(--ease-smooth-out); }
-  #go:hover { transform: translateY(-.3cqmin); } #go:active { transform: translateY(.8cqmin); box-shadow: 0 .4cqmin 0 var(--shadow); }
-  #go:focus-visible { outline: 4px solid var(--ink); outline-offset: 4px; }
-  #boot p { margin: 0; font: 500 max(13px, 2.4cqmin)/1.4 var(--font-utility); color: var(--ink); text-align: center; max-width: 60ch; }
-  #boot p.keys { font-size: max(12px, 1.9cqmin); opacity: .8; }
+  /* grown-up strip */
+  #keys { position: absolute; left: max(16px, env(safe-area-inset-left, 0px)); bottom: 28px; z-index: 56; max-width: min(60ch, 80cqw); padding: 12px 16px;
+    border-width: 4px; border-radius: 16px; font: 500 13px/1.5 var(--font-utility); color: var(--ink); }
   #hud { position: absolute; left: max(10px, env(safe-area-inset-left, 0px)); bottom: 6px; z-index: 55; font: 11px var(--font-utility); color: var(--ink); opacity: .55; pointer-events: none; }
 
   @container (aspect-ratio < 1.15) {
@@ -354,7 +346,7 @@
 </style>
 </head>
 <body>
-<div id="app" data-screen="boot">
+<div id="app" data-screen="title">
   <div class="sun"></div><div class="cloud c1"></div><div class="cloud c2"></div>
   <svg class="hills" viewBox="0 0 100 40" preserveAspectRatio="none" aria-hidden="true">
     <path fill="#a8d8a0" d="M0 18 C15 6 30 8 45 16 C60 24 75 10 100 14 V40 H0Z"/>
@@ -403,7 +395,7 @@
     </div>
   </section>
 
-  <div id="pad" data-edition="white" aria-hidden="true">
+  <div id="pad" data-edition="green" aria-hidden="true">
     <svg id="padsvg" viewBox="-10 -40 420 345">
       <g id="k-lt" class="k trig"><rect class="press" x="74" y="20" width="64" height="18" rx="8"/></g>
       <g id="k-rt" class="k trig"><rect class="press" x="262" y="20" width="64" height="18" rx="8"/></g>
@@ -422,13 +414,13 @@
       <g id="k-dl" class="k arm"><path class="halo" d="M154 154 H134 a5 5 0 0 0 -5 5 v12 a5 5 0 0 0 5 5 H154Z"/><path class="cap press" d="M156 154 H134 a5 5 0 0 0 -5 5 v12 a5 5 0 0 0 5 5 H156Z"/><path class="mark" d="M140 161 l-5 4 l5 4Z"/></g>
       <g id="k-dr" class="k arm"><path class="halo" d="M176 154 H196 a5 5 0 0 1 5 5 v12 a5 5 0 0 1 -5 5 H176Z"/><path class="cap press" d="M174 154 H196 a5 5 0 0 1 5 5 v12 a5 5 0 0 1 -5 5 H174Z"/><path class="mark" d="M190 161 l5 4 l-5 4Z"/></g>
       <rect class="cap" x="154" y="154" width="22" height="22" stroke="none"/><circle class="dimple" cx="165" cy="165" r="4"/>
-      <g id="k-minus" class="k"><circle class="halo" cx="168" cy="70" r="12"/><circle class="cap press" cx="168" cy="70" r="8"/><path class="mark" d="M164 70 h8"/></g>
-      <g id="k-home" class="k"><circle class="led" cx="200" cy="68" r="12"/><circle class="cap press" cx="200" cy="68" r="9"/>
+      <g id="k-minus" class="k"><circle class="halo" cx="168" cy="70" r="12"/><circle class="cap small press" cx="168" cy="70" r="8"/><path class="mark" d="M164 70 h8"/></g>
+      <g id="k-home" class="k"><circle class="led" cx="200" cy="68" r="12"/><circle class="cap small press" cx="200" cy="68" r="9"/>
         <path class="mark" d="M196 65 h.1 M200 65 h.1 M204 65 h.1 M198 68.5 h.1 M202 68.5 h.1 M200 72 h.1" stroke-width="2.2"/></g>
-      <g id="k-plus" class="k"><circle class="halo" cx="232" cy="70" r="12"/><circle class="cap press" cx="232" cy="70" r="8"/><path class="mark" d="M228 70 h8 M232 66 v8"/></g>
-      <g><circle class="cap" cx="182" cy="97" r="7"/><rect class="mark" x="179" y="94" width="6" height="6" rx="1"/></g>
+      <g id="k-plus" class="k"><circle class="halo" cx="232" cy="70" r="12"/><circle class="cap small press" cx="232" cy="70" r="8"/><path class="mark" d="M228 70 h8 M232 66 v8"/></g>
+      <g><circle class="cap small" cx="182" cy="97" r="7"/><rect class="mark" x="179" y="94" width="6" height="6" rx="1"/></g>
       <circle cx="200" cy="99" r="1.6" fill="var(--c-mark)"/>
-      <g><circle class="cap" cx="218" cy="97" r="7"/><path class="mark" d="M218 93.2 l1.2 2.6 2.8 .3 -2.1 1.9 .6 2.8 -2.5 -1.4 -2.5 1.4 .6 -2.8 -2.1 -1.9 2.8 -.3Z"/></g>
+      <g><circle class="cap small" cx="218" cy="97" r="7"/><path class="mark" d="M218 93.2 l1.2 2.6 2.8 .3 -2.1 1.9 .6 2.8 -2.5 -1.4 -2.5 1.4 .6 -2.8 -2.1 -1.9 2.8 -.3Z"/></g>
       <g id="k-y" class="k face"><circle class="halo" cx="292" cy="70" r="17"/><g class="press"><circle class="cap" cx="292" cy="70" r="12.5"/><text class="lt" x="292" y="70.5">Y</text></g></g>
       <g id="k-x" class="k face"><circle class="halo" cx="268" cy="94" r="17"/><g class="press"><circle class="cap" cx="268" cy="94" r="12.5"/><text class="lt" x="268" y="94.5">X</text></g></g>
       <g id="k-b" class="k face"><circle class="halo" cx="316" cy="94" r="17"/><g class="press"><circle class="cap" cx="316" cy="94" r="12.5"/><text class="lt" x="316" y="94.5">B</text></g></g>
@@ -474,13 +466,7 @@
     <div class="prompt" id="finprompt"><span class="key ka">A</span><span>➜</span><span class="sticker">🏠</span></div>
   </section>
 
-  <div id="boot">
-    <h1 class="logo" style="font-size:9cqmin"><i style="--lc:var(--ink)">Sleepy Friends</i></h1>
-    <button id="go" type="button">👆 Start</button>
-    <p id="padstatus"></p>
-    <p>Grown-up: click Start once to turn on sound, then hand over the controller.</p>
-    <p class="keys">Your keys: Esc title · 1–5 jump to a level · 6 paint · N new picture · M mute · − + volume · R rumble · K controller colour · L button layout · H shy friends. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Enter is +.</p>
-  </div>
+  <div id="keys" class="papercard" hidden>Esc title · 1–5 jump to a level · 6 paint · N new picture · M mute · − + volume · R rumble · K controller colour · L button layout · H shy friends · G hide this. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Enter is +.</div>
   <div id="hud"></div>
   <svg class="grain" aria-hidden="true"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .24  0 0 0 0 .2  0 0 0 0 .32  0 0 0 .1 0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
 </div>
@@ -495,7 +481,7 @@ const store = {
   set(o) { try { localStorage.setItem('sleepy-friends', JSON.stringify(o)); } catch (e) {} },
 };
 const saved = store.get();
-const save = () => store.set({ paint: G.paintUnlocked, edition: G.edition });
+const save = () => store.set({ paint: G.paintUnlocked, pad: G.edition });
 
 const FRIEND = {
   a: { emoji: '🦖', color: '#63c886', sound: 'dino' }, b: { emoji: '🚒', color: '#f0766c', sound: 'siren' },
@@ -504,8 +490,8 @@ const FRIEND = {
 const FACE = ['a', 'b', 'x', 'y'];
 const STARS = 5, LEVELS = 5;
 const G = {
-  screen: 'boot', level: 1, stars: 0, gen: 0,
-  edition: saved.edition || 'white', paintUnlocked: !!saved.paint,
+  screen: 'title', level: 1, stars: 0, gen: 0,
+  edition: saved.pad || 'green', paintUnlocked: !!saved.paint,
   rumble: true, volume: 0.5, muted: false, shy: true,
   busyUntil: 0, target: '', lastWoken: '', presses: [], hiddenUntil: 0, readyAt: 0,
   truck: { x: .5, y: .5, face: 1 }, goal: null, goalFriend: 'a', pickupAt: 0, drives: 0, lastMoveAt: 0,
@@ -622,7 +608,7 @@ function moveDir(cur) {
   return { x: Math.max(-1, Math.min(1, x)), y: Math.max(-1, Math.min(1, y)) };
 }
 addEventListener('keydown', e => {
-  if (G.screen === 'boot') { if (e.key === 'Enter' || e.key === ' ') boot(); return; }
+  ensureAudio();
   const k = e.key.length === 1 ? e.key.toLowerCase() : e.key;
   if (k.startsWith('Arrow') || k === 'Backspace') e.preventDefault();
   if (heldKeys.has(k)) return; heldKeys.add(k);
@@ -636,8 +622,9 @@ addEventListener('keydown', e => {
   else if (k === '-' || k === '_') { G.volume = Math.max(0.1, G.volume - 0.1); setVolume(); }
   else if (k === '+' || k === '=') { G.volume = Math.min(1, G.volume + 0.1); setVolume(); }
   else if (k === 'h') G.shy = !G.shy;
+  else if (k === 'g') $('#keys').hidden = !$('#keys').hidden;
   else if (k === 'l') layoutChoice = layoutShown === 'standard' ? 'alternate' : 'standard';
-  else if (k === 'k') { G.edition = { white: 'black', black: 'green', green: 'white' }[G.edition]; pad.dataset.edition = G.edition; save(); }
+  else if (k === 'k') { G.edition = { green: 'white', white: 'black', black: 'green' }[G.edition]; pad.dataset.edition = G.edition; save(); }
 });
 addEventListener('keyup', e => heldKeys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
 addEventListener('blur', () => heldKeys.clear());
@@ -685,10 +672,12 @@ function nope(n) {
 function setScreen(s) { G.screen = s; app.dataset.screen = s; refreshPad(); }
 
 // ---------- flow ----------
-function boot() {
-  if (G.screen !== 'boot') return;
-  initAudio(); goTitle();
+// Browsers only allow sound after a click or key press on the page, so keep trying.
+function ensureAudio() {
+  if (!ac) initAudio();
+  if (ac && ac.state === 'suspended') ac.resume().catch(() => {});
 }
+const soundOn = () => !!ac && ac.state === 'running';
 function openModal(m) { m.classList.remove('is-closing'); m.classList.add('is-open'); }
 function closeModal(m) {
   if (!m.classList.contains('is-open')) return;
@@ -927,7 +916,8 @@ function updatePaint(cur, dt, t) {
 // ---------- one press ----------
 function onPress(n) {
   const t = now();
-  if (G.screen === 'boot' || G.screen === 'count') return;
+  ensureAudio();
+  if (G.screen === 'count') return;
   if (G.screen === 'finale' && t < G.readyAt) return;
   if (!allowed().has(n)) { nope(n); return; } // a red X on the button he pressed
   switch (G.screen) {
@@ -957,11 +947,10 @@ function frame() {
   prev = cur;
   $('#k-ls .cap-move').setAttribute('transform', `translate(${(stick.lx * 7).toFixed(1)} ${(stick.ly * 7).toFixed(1)})`);
   $('#k-rs .cap-move').setAttribute('transform', `translate(${(stick.rx * 7).toFixed(1)} ${(stick.ry * 7).toFixed(1)})`);
-  if (G.screen === 'boot') $('#padstatus').textContent = padStatus();
   if (G.screen === 'play' && G.level >= 3) updateDrive(cur, dt, t);
   if (G.screen === 'paint') updatePaint(cur, dt, t);
   if (diamond.classList.contains('hush') && t > G.hiddenUntil) diamond.classList.remove('hush');
-  hud.textContent = G.screen === 'boot' ? '' : `${padStatus()} · layout ${layoutShown} · last button #${lastRaw}${G.muted ? ' · muted' : ''}${G.rumble ? '' : ' · rumble off'}${G.shy ? '' : ' · shy off'}`;
+  hud.textContent = `${soundOn() ? '' : '🔇 Click the page once for sound · '}G grown-up keys · ${padStatus()} · layout ${layoutShown} · last button #${lastRaw}${G.muted ? ' · muted' : ''}${G.rumble ? '' : ' · rumble off'}${G.shy ? '' : ' · shy off'}`;
   requestAnimationFrame(frame);
 }
 
@@ -974,9 +963,10 @@ $$('.logo [data-word]').forEach((line, w) => {
 });
 $('#confetti').innerHTML = Array.from({ length: 36 }, (_, i) =>
   `<i style="--x:${(i * 2.77 + (i % 5) * 3) % 100}%;--c:${Object.values(PAINT)[i % 4]};--d:${5 + (i % 5)}s;--w:${-(i * .37) % 6}s;--rot:${(i % 2 ? 1 : -1) * (200 + i * 20)}deg"></i>`).join('');
-$('#go').addEventListener('click', boot);
+addEventListener('pointerdown', ensureAudio);
 addEventListener('resize', () => { if (G.screen === 'paint') newPicture(); });
 window.__game = { G, P, onPress, startLevel, startPaint, showFinale };
+goTitle();
 requestAnimationFrame(frame);
 </script>
 </body>
