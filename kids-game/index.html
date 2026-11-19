@@ -467,13 +467,40 @@
     font-family: var(--font-utility); color: var(--ink); }
   #settings h2 { margin: 0; font: 700 4.8cqmin var(--font-display); }
   #setrows { display: grid; align-content: start; gap: .3cqmin; }
-  .setrow { display: flex; justify-content: space-between; align-items: center; gap: 2cqmin; padding: .45cqmin 2cqmin; border-radius: 2cqmin; font-size: 3.3cqmin; line-height: 1.2; font-weight: 500;
+  .setrow { display: flex; justify-content: space-between; align-items: center; gap: 2cqmin; padding: .3cqmin 2cqmin; border-radius: 2cqmin; font-size: 3.15cqmin; line-height: 1.2; font-weight: 500;
     border: .5cqmin solid transparent; }
   .setrow.sel { background: var(--yellow); border-color: var(--ink); }
   .setrow .val { font-weight: 700; text-align: right; }
   #sethelp { margin: 0; font-size: 2.6cqmin; line-height: 1.4; white-space: pre-line; }
   .wiz { display: grid; justify-items: center; align-content: center; gap: 4cqmin; height: 100%; font-size: 4.6cqmin; font-weight: 600; text-align: center; }
   .wiz .key { font-size: 13cqmin; background: var(--yellow); }
+
+  /* settings by touch or mouse: tap the arrows, tap a row, tap the cross */
+  #settings h2 { display: flex; justify-content: space-between; align-items: center; }
+  #settings button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; -webkit-tap-highlight-color: transparent; }
+  #setclose { width: 1.6em; height: 1.6em; border-radius: 50%; background: var(--paper) !important; border: .12em solid var(--ink) !important; font-size: .8em !important; line-height: 1; }
+  #setrows { min-height: 0; overflow-y: auto; touch-action: pan-y; }
+  .setrow .val { display: flex; align-items: center; justify-content: flex-end; gap: .5em; }
+  .setrow .val button { padding: 0 .3em; }
+  .setrow[data-act] { cursor: pointer; }
+  #gear { position: absolute; left: max(3cqw, env(safe-area-inset-left, 0px)); top: max(3cqh, env(safe-area-inset-top, 0px)); z-index: 45; display: none; place-items: center; gap: 0;
+    width: max(7cqmin, 52px); height: max(7cqmin, 52px); border-radius: 50%; background: var(--paper); border: .5cqmin solid #fff; box-shadow: 0 .6cqmin 0 var(--shadow);
+    font: 600 max(1.6cqmin, 10px)/1 var(--font-utility); color: var(--ink); cursor: pointer; touch-action: none; -webkit-tap-highlight-color: transparent; user-select: none; }
+  #gear span { font-size: max(3.4cqmin, 24px); line-height: 1; grid-area: 1 / 1; translate: 0 -12%; }
+  #gear small { grid-area: 1 / 1; align-self: end; margin-bottom: 9%; font-size: inherit; }
+  #app[data-screen="title"] #gear { display: grid; }
+  #gear::after { content: ""; position: absolute; inset: -.9cqmin; border-radius: 50%; border: .9cqmin solid var(--green); opacity: 0; transform: scale(.7); }
+  #gear.holding::after { opacity: 1; transform: scale(1); transition: transform 700ms var(--ease-linear), opacity var(--duration-quick) var(--ease-linear); }
+  #app[data-touch] #settings { left: max(3cqw, env(safe-area-inset-left, 0px)); right: max(3cqw, env(safe-area-inset-right, 0px)); width: auto; top: 2cqh; bottom: 2cqh; z-index: 46; }
+  #app[data-touch][data-screen="settings"] #pad { opacity: 0; pointer-events: none; }
+  #app[data-touch] #settings .papercard { padding: 14px 16px; gap: 8px; }
+  #app[data-touch] #settings h2 { font-size: 24px; }
+  #app[data-touch] .setrow { font-size: 17px; padding: 4px 6px 4px 10px; min-height: 48px; border-radius: 12px; border-width: 2px; flex-wrap: wrap; }
+  #app[data-touch] .setrow.sel { background: none; border-color: transparent; }
+  #app[data-touch] .setrow + .setrow { border-top: 1px solid rgba(61, 53, 82, .14); border-radius: 0; }
+  #app[data-touch] .setrow .val button { min-width: 44px; min-height: 44px; font-size: 20px; border-radius: 50%; background: var(--paper); }
+  #app[data-touch] .setrow[data-act] .val { min-height: 44px; padding-right: 10px; }
+  #app[data-touch] #sethelp { font-size: 13px; }
 
   /* grown-up strip */
   #hud { position: absolute; left: max(10px, env(safe-area-inset-left, 0px)); bottom: 6px; z-index: 55; font: 11px var(--font-utility); color: var(--ink); opacity: .55; pointer-events: none; }
@@ -624,9 +651,10 @@
     <div class="prompt" id="finprompt"><span class="key ka" data-k="a">A</span><span>➜</span><span class="sticker">🏠</span></div>
   </section>
 
+  <button id="gear" aria-label="Grown-up settings: press and hold"><span>⚙</span><small>hold</small></button>
   <div id="fx" aria-hidden="true"></div>
   <div id="settings" class="overlay t-modal" role="dialog" aria-label="Grown-up settings">
-    <div class="papercard"><h2>Grown-up settings</h2><div id="setrows"></div><p id="sethelp"></p></div>
+    <div class="papercard"><h2><span>Grown-up settings</span><button id="setclose" aria-label="Close settings">✕</button></h2><div id="setrows"></div><p id="sethelp"></p></div>
   </div>
   <div id="hud"></div>
   <svg class="grain" aria-hidden="true"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .24  0 0 0 0 .2  0 0 0 0 .32  0 0 0 .1 0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
@@ -1311,31 +1339,52 @@ const SETROWS = [
   { label: 'Stars to finish a level', val: () => G.starGoal, step: d => { G.starGoal = cyc([3, 4, 5], G.starGoal, d); } },
   { label: 'Pointing hints appear', val: () => ({ .5: 'Quickly', 1: 'After a moment', 2: 'Slowly' })[G.hintMul], step: d => { G.hintMul = cyc([.5, 1, 2], G.hintMul, d); } },
   { label: 'Volume', val: () => Math.round(G.volume * 10) || 'Off', step: d => { G.volume = Math.max(0, Math.min(1, (Math.round(G.volume * 10) + d) / 10)); setVolume(); play('pop'); } },
-  { label: 'Rumble', val: () => G.rumble ? 'On' : 'Off', step: () => { G.rumble = !G.rumble; rumble(); } },
+  { padOnly: true, label: 'Rumble', val: () => G.rumble ? 'On' : 'Off', step: () => { G.rumble = !G.rumble; rumble(); } },
   { label: 'Friends hide from button mashing', val: () => G.shy ? 'On' : 'Off', step: () => { G.shy = !G.shy; } },
-  { label: 'Button numbering', val: () => ({ auto: `Auto (${layoutShown})`, standard: 'Standard', alternate: 'Alternate' })[layoutChoice], step: d => { layoutChoice = cyc(['auto', 'standard', 'alternate'], layoutChoice, d); } },
-  { label: 'Teach the game my buttons', val: () => G.custom ? 'Learned ▶' : 'Start ▶', act: () => { G.wiz = { i: 0, steps: WIZ_STEPS, got: {}, readyAt: now() + 400 }; } },
-  { label: 'Forget learned buttons', val: () => G.custom ? '▶' : 'Nothing learned', act: () => { G.custom = null; } },
+  { padOnly: true, label: 'Button numbering', val: () => ({ auto: `Auto (${layoutShown})`, standard: 'Standard', alternate: 'Alternate' })[layoutChoice], step: d => { layoutChoice = cyc(['auto', 'standard', 'alternate'], layoutChoice, d); } },
+  { padOnly: true, label: 'Teach the game my buttons', val: () => G.custom ? 'Learned ▶' : 'Start ▶', act: () => { G.wiz = { i: 0, steps: WIZ_STEPS, got: {}, readyAt: now() + 400 }; } },
+  { padOnly: true, label: 'Forget learned buttons', val: () => G.custom ? '▶' : 'Nothing learned', act: () => { G.custom = null; } },
   { label: 'Lock paint again', val: () => !G.paintUnlocked ? 'Locked' : G.confirm ? 'Press again to lock' : 'Unlocked ▶', act: () => { if (G.confirm) { G.paintUnlocked = false; G.confirm = false; } else if (G.paintUnlocked) G.confirm = true; } },
-  { label: 'Keyboard keys', val: () => G.showKeys ? 'Shown below' : 'Show ▶', act: () => { G.showKeys = !G.showKeys; } },
+  { padOnly: true, label: 'Keyboard keys', val: () => G.showKeys ? 'Shown below' : 'Show ▶', act: () => { G.showKeys = !G.showKeys; } },
   { label: 'Close', val: () => '▶', act: () => closeSettings() },
 ];
+const setRows = () => SETROWS.filter(r => !(r.padOnly && touchOn()));
 function renderSettings() {
   if (G.screen !== 'settings') return;
-  const w = G.wiz;
+  const w = G.wiz, rows = setRows(); G.setRow = Math.min(G.setRow, rows.length - 1);
   $('#setrows').innerHTML = w
     ? `<div class="wiz"><span>Press this button on the controller</span><span class="key">${lab(w.steps[w.i])}</span><span>${w.i + 1} of ${w.steps.length}</span></div>`
-    : SETROWS.map((r, i) => `<div class="setrow${i === G.setRow ? ' sel' : ''}"><span>${r.label}</span><span class="val">${r.step ? '◀ ' : ''}${r.val()}${r.step ? ' ▶' : ''}</span></div>`).join('');
+    : rows.map((r, i) => `<div class="setrow${i === G.setRow ? ' sel' : ''}" data-i="${i}"${r.step ? '' : ' data-act'}><span>${r.label}</span><span class="val">` +
+      (r.step ? `<button data-d="-1" aria-label="${r.label}: previous">◀</button><span>${r.val()}</span><button data-d="1" aria-label="${r.label}: next">▶</button>` : `<span>${r.val()}</span>`) + '</span></div>').join('');
+  const cur = $('.setrow.sel'); if (cur) cur.scrollIntoView({ block: 'nearest' });
   $('#sethelp').textContent = w ? 'The button to press is also lit on the picture. Esc on the keyboard cancels.'
+    : touchOn() ? 'Tap ◀ or ▶ to change a setting. ✕ closes. To open this screen, press and hold ⚙ on the title screen.'
     : G.showKeys ? 'Keyboard: Esc title · 1–9 and 0 jump to a level · P paint · N new picture · M mute · W A S D are the four buttons · arrows are the D-pad · Q E the bumpers · Enter and Backspace the two small buttons'
-    : `D-pad chooses and changes · ${lab('a')} selects · ${lab('b')} closes · hold ${lab('minus')} and ${lab('plus')} to open this screen\nController: ${padId || 'none connected'} · last button #${lastRaw}`;
+    : `D-pad chooses and changes · ${lab('a')} selects · ${lab('b')} closes · hold ${lab('minus')} and ${lab('plus')} to open this screen, or hold ⚙ on the title\nController: ${padId || 'none connected'} · last button #${lastRaw}`;
+}
+$('#setrows').addEventListener('click', e => { // touch and mouse: arrows change, action rows act
+  if (G.wiz) return;
+  const row = e.target.closest('.setrow'); if (!row) return;
+  const btn = e.target.closest('button[data-d]'), r = setRows()[+row.dataset.i];
+  if (r.step && !btn) { G.setRow = +row.dataset.i; renderSettings(); return; }
+  if (G.setRow !== +row.dataset.i) G.confirm = false;
+  G.setRow = +row.dataset.i; settingsPress(btn ? (btn.dataset.d === '1' ? 'dr' : 'dl') : 'a');
+});
+$('#setclose').addEventListener('click', () => { if (G.screen === 'settings') closeSettings(); });
+{ // the gear on the title: press and hold, so a small finger does not open it by accident
+  const gear = $('#gear'); let timer = 0;
+  const stop = () => { clearTimeout(timer); gear.classList.remove('holding'); };
+  gear.addEventListener('pointerdown', e => { e.preventDefault(); ensureAudio(); gear.classList.add('holding'); timer = setTimeout(() => { stop(); if (G.screen === 'title') openSettings(); }, 700); });
+  for (const ev of ['pointerup', 'pointerleave', 'pointercancel']) gear.addEventListener(ev, stop);
+  gear.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); e.stopPropagation(); if (G.screen === 'title') openSettings(); } });
+  gear.addEventListener('contextmenu', e => e.preventDefault());
 }
 function openSettings() { leave(); G.setRow = 0; G.confirm = false; setScreen('settings'); openModal($('#settings')); renderSettings(); play('open'); }
 function closeSettings() { save(); play('close'); goTitle(); }
 function settingsPress(n) {
-  const r = SETROWS[G.setRow];
+  const rows = setRows(), r = rows[G.setRow];
   if (n === 'b') return closeSettings();
-  if (n === 'du' || n === 'dd') { G.setRow = (G.setRow + (n === 'dd' ? 1 : -1) + SETROWS.length) % SETROWS.length; G.confirm = false; play('step'); }
+  if (n === 'du' || n === 'dd') { G.setRow = (G.setRow + (n === 'dd' ? 1 : -1) + rows.length) % rows.length; G.confirm = false; play('step'); }
   else if (r.step) { r.step(n === 'dl' ? -1 : 1); play('pop'); }
   else if (n === 'a') { r.act(); play('pop'); }
   if (G.screen !== 'settings') return;
