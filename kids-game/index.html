@@ -180,8 +180,9 @@
     transition: transform var(--duration-fast) var(--ease-smooth-out), opacity var(--duration-fast) var(--ease-smooth-out), background-color var(--duration-fast) var(--ease-smooth-out); }
   #levels b.is-done { background: var(--green); opacity: 1; }
   #levels b.is-now { transform: scale(1.3); background: var(--yellow); color: var(--ink); opacity: 1; }
-  #stars { display: flex; gap: .6cqmin; font-size: 5.6cqmin; }
-  #stars .sticker { opacity: .28; filter: grayscale(1); }
+  #stars { display: flex; gap: .9cqmin; font-size: 5.2cqmin; padding: .7cqmin 1.8cqmin; border-radius: 99px; background: var(--paper);
+    border: .6cqmin solid #fff; box-shadow: 0 .6cqmin 0 var(--shadow); }
+  #stars .sticker { opacity: .3; filter: grayscale(1); }
   #stars .sticker.on { opacity: 1; filter: drop-shadow(.04em 0 0 #fff) drop-shadow(-.04em 0 0 #fff) drop-shadow(0 .04em 0 #fff) drop-shadow(0 -.04em 0 #fff) drop-shadow(0 .06em 0 var(--shadow));
     animation: t-check-fade var(--check-opacity-dur) var(--check-ease-out) both, t-check-rotate var(--check-rotate-dur) var(--check-ease-out) both,
       t-check-bob var(--check-bob-dur) var(--check-ease-bob) both; }
@@ -192,7 +193,7 @@
 
   #scene { position: absolute; left: 3cqw; top: 14cqh; width: 54cqw; bottom: 5cqh; }
   #scene { transition: opacity var(--duration-fast) var(--ease-smooth-out), filter var(--duration-fast) var(--ease-smooth-out); }
-  #app:is([data-screen="done"], [data-screen="count"]) #scene { opacity: .4; filter: blur(var(--blur-small)); }
+  #app:is([data-screen="done"], [data-screen="count"]) #scene { opacity: 0; }
   #scene > div { position: absolute; inset: 0; opacity: 0; visibility: hidden;
     transition: opacity var(--duration-fast) var(--ease-smooth-out), visibility 0s linear var(--duration-fast); }
   #scene[data-mode="diamond"] #diamondwrap, #scene[data-mode="field"] #field, #scene[data-mode="stage"] #stage, #scene[data-mode="paint"] #paintwrap {
@@ -200,7 +201,8 @@
 
   /* friends diamond: same shape as the Y X B A buttons */
   #diamondwrap { display: grid; place-items: center; container-type: size; }
-  #diamond { position: relative; width: min(100cqw, 100cqh); aspect-ratio: 1; container-type: size; }
+  #diamondwrap .board { position: absolute; inset: 0; background: #e6ecf8; }
+  #diamond { position: relative; width: min(90cqw, 90cqh); aspect-ratio: 1; container-type: size; }
   .friend { position: absolute; width: 34cqw; height: 34cqw; translate: -50% -50%; }
   .friend[data-b="y"] { left: 50%; top: 18%; } .friend[data-b="x"] { left: 18%; top: 50%; }
   .friend[data-b="b"] { left: 82%; top: 50%; } .friend[data-b="a"] { left: 50%; top: 82%; }
@@ -212,7 +214,7 @@
   .friend .zzz { position: absolute; right: 2cqw; top: 0; font-size: 7cqw; animation: zzz 3s var(--ease-in-out) infinite;
     transition: opacity var(--duration-quick) var(--ease-smooth-out); }
   @keyframes zzz { 50% { translate: 1cqw -1.5cqw; } }
-  .friend .key { position: absolute; left: -1cqw; bottom: -1cqw; font-size: 6cqw; --kc: var(--c); }
+  .friend .key { position: absolute; left: -1cqw; bottom: -1cqw; font-size: 7cqw; --kc: var(--c); }
   .friend.awake .disc { opacity: 1; transform: scale(1.08); }
   .friend.awake .emo { opacity: 1; transform: scale(1.15); animation: hop 450ms var(--ease-in-out) 2 var(--duration-fast); }
   .friend.awake .zzz, .friend.peek .zzz { opacity: 0; }
@@ -225,6 +227,21 @@
   @keyframes bob { 50% { translate: -50% -54%; } }
   @keyframes glow { 50% { transform: scale(1.06); } }
   @keyframes wobble { 25% { rotate: -6deg; } 75% { rotate: 6deg; } }
+  /* a hand points at the button to press; on the balloon level it pushes and stays down */
+  .friend .tap { position: absolute; left: 9cqw; bottom: -3cqw; font-size: 10cqw; opacity: 0; z-index: 3; pointer-events: none;
+    transition: opacity var(--duration-fast) var(--ease-smooth-out); }
+  .friend.nudge .tap { opacity: 1; animation: tap 1s var(--ease-in-out) infinite; }
+  @keyframes tap { 0%, 100% { translate: 3cqw 0; } 45%, 60% { translate: 0 0; scale: .88; } }
+  #diamond[data-kind="hold"] .friend.nudge .tap { animation: taphold 2.6s var(--ease-in-out) infinite; }
+  @keyframes taphold { 0%, 100% { translate: 4cqw 0; } 14%, 82% { translate: 0 0; scale: .88; } }
+  .friend.nudge .key { animation: glow 1s var(--ease-in-out) infinite; }
+  .friend .key { z-index: 2; }
+  .friend .meter { position: absolute; inset: -3.2cqw; border-radius: 50%; opacity: 0; pointer-events: none;
+    background: conic-gradient(var(--ink) calc(var(--grow, 0) * 1turn), #fff 0);
+    -webkit-mask: radial-gradient(closest-side, transparent calc(100% - 2.6cqw), #000 calc(100% - 2.5cqw));
+    mask: radial-gradient(closest-side, transparent calc(100% - 2.6cqw), #000 calc(100% - 2.5cqw));
+    transition: opacity var(--duration-fast) var(--ease-smooth-out); }
+  #diamond[data-kind="hold"] .friend.peek .meter { opacity: 1; }
   #hush { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-size: 16cqw; opacity: 0; transform: scale(.6);
     transition: opacity var(--duration-quick) var(--ease-smooth-out), transform var(--duration-quick) var(--ease-smooth-out); }
   #diamond.hush #hush { opacity: 1; transform: scale(1);
@@ -242,7 +259,7 @@
   #field[data-level="combo"] #goal.got .zzz { display: none; }
 
   /* balloon level: hold the button to blow it up */
-  .friend .balloon { position: absolute; left: 50%; bottom: 78%; font-size: 13cqw; translate: -50% 0; opacity: 0; transform-origin: 50% 100%;
+  .friend .balloon { position: absolute; left: 50%; bottom: 72%; font-size: 11cqw; translate: -50% 0; opacity: 0; transform-origin: 50% 100%;
     transform: scale(calc(.45 + var(--grow, 0) * 1.1)); transition: opacity var(--duration-fast) var(--ease-smooth-out); }
   #diamond[data-kind="hold"] .friend.peek .balloon { opacity: 1; }
   .friend.flyaway .balloon { opacity: 1; animation: flyaway 1.3s var(--ease-in-out) forwards; }
@@ -305,12 +322,19 @@
   #blob { width: 9cqmin; height: 9cqmin; border-radius: 50%; margin: -4.5cqmin; background: var(--pc); border: .8cqmin solid #fff; opacity: .9;
     transition: background-color var(--duration-fast) var(--ease-smooth-out); }
   #car { font-size: 11cqmin; }
-  #next { opacity: 0; transition: opacity var(--duration-quick) var(--ease-smooth-out); }
-  #next.is-shown { opacity: 1; transition: opacity var(--duration-very-slow) var(--ease-bounce); }
-  #next .spot { position: absolute; width: 15cqmin; height: 15cqmin; left: -7.5cqmin; top: -7.5cqmin; border-radius: 50%; background: var(--yellow);
-    border: 1cqmin solid #fff; box-shadow: 0 1cqmin 0 var(--shadow); }
-  #next.is-shown .spot { animation: glow 1.4s var(--ease-in-out) infinite; }
-  #next span { position: absolute; translate: -50% -50%; font-size: 8cqmin; line-height: 1; color: var(--ink); }
+  #paintwrap #next { position: absolute; inset: auto; left: 55%; bottom: 5cqmin; padding: 2cqmin 5cqmin; background: #fff; border-color: var(--yellow); border-radius: 99px;
+    opacity: 0; translate: -50% 40%; transition: opacity var(--duration-quick) var(--ease-smooth-out), translate var(--duration-quick) var(--ease-smooth-out); }
+  #paintwrap #next.is-shown { opacity: 1; translate: -50% 0; transition: opacity var(--duration-very-slow) var(--ease-bounce), translate var(--duration-very-slow) var(--ease-bounce); }
+  #spot, #parrow { opacity: 0; transition: opacity var(--duration-fast) var(--ease-smooth-out); }
+  #spot.is-shown, #parrow.is-shown { opacity: 1; }
+  #spot i { position: absolute; width: 12cqmin; height: 12cqmin; margin: -6cqmin; border-radius: 50%; box-sizing: border-box;
+    border: 1.3cqmin solid var(--yellow); outline: .6cqmin solid var(--ink); box-shadow: inset 0 0 0 .6cqmin var(--ink), 0 0 0 1.4cqmin #fff;
+    animation: spot .9s var(--ease-in-out) infinite; }
+  @keyframes spot { 50% { transform: scale(1.25); } }
+  #parrow { width: 9cqmin; height: 9cqmin; }
+  #parrow svg { display: block; width: 100%; height: 100%; translate: -50% -50%; overflow: visible; animation: nudge 1s var(--ease-in-out) infinite; }
+  #paintwrap.is-done #blob { opacity: 0; } #paintwrap.is-done #pots { opacity: .35; }
+  #pots { transition: opacity var(--duration-fast) var(--ease-smooth-out); }
   #pots { position: absolute; left: 3cqmin; top: 50%; translate: 0 -50%; display: grid; gap: 2.4cqmin; }
   #pots .key { font-size: 4.4cqmin; opacity: .7; transition: transform var(--duration-very-slow) var(--ease-bounce), opacity var(--duration-fast) var(--ease-smooth-out); }
   #pots .key.is-on { transform: scale(1.45); opacity: 1; }
@@ -318,9 +342,13 @@
   /* level complete + countdown */
   .overlay { position: absolute; left: 3cqw; top: 14cqh; width: 54cqw; bottom: 5cqh; display: grid; place-items: center; z-index: 30; pointer-events: none; }
   #done .papercard, #help .papercard { display: grid; }
-  #done .papercard { padding: 4cqmin 6cqmin; gap: 2.5cqmin; justify-items: center; }
-  #done .row { display: flex; gap: 1.5cqmin; font-size: 9cqmin; }
-  #done .party { font-size: 11cqmin; display: flex; gap: 2cqmin; }
+  .overlay { container-type: size; }
+  #done .papercard, #count .papercard { position: absolute; inset: 0; background: #fffdf6; border: 1.6cqmin solid var(--yellow);
+    outline: .7cqmin solid #fff; box-shadow: 0 2cqmin 0 var(--shadow); }
+  #done .papercard { align-content: center; gap: 8cqmin; justify-items: center; }
+  #done .row { position: static; display: flex; gap: 3cqmin; font-size: 13cqmin; }
+  #done .party { font-size: 14cqmin; display: flex; gap: 5cqmin; }
+  #done .prompt { font-size: 9cqmin; gap: 3cqmin; padding: 2cqmin 6cqmin; border-radius: 99px; background: var(--paper); }
   #done.is-open .party .sticker { animation: hop2 700ms var(--ease-in-out) infinite; }
   #done.is-open .party .sticker:nth-child(2n) { animation-delay: -350ms; }
   @keyframes hop2 { 50% { translate: 0 -14%; } }
@@ -422,11 +450,11 @@
       <div id="stars" aria-hidden="true"></div>
     </div>
     <div id="scene" data-mode="diamond">
-      <div id="diamondwrap"><div id="diamond">
-        <div class="friend" data-b="y" style="--c:var(--yellow);--tilt:-3deg"><div class="disc"></div><span class="emo sticker">🚕</span><span class="zzz">💤</span><span class="balloon sticker">🎈</span><span class="key">Y</span></div>
-        <div class="friend" data-b="x" style="--c:var(--blue);--tilt:2deg"><div class="disc"></div><span class="emo sticker">🐳</span><span class="zzz">💤</span><span class="balloon sticker">🎈</span><span class="key">X</span></div>
-        <div class="friend" data-b="b" style="--c:var(--red);--tilt:-2deg"><div class="disc"></div><span class="emo sticker">🚒</span><span class="zzz">💤</span><span class="balloon sticker">🎈</span><span class="key">B</span></div>
-        <div class="friend" data-b="a" style="--c:var(--green);--tilt:3deg"><div class="disc"></div><span class="emo sticker">🦖</span><span class="zzz">💤</span><span class="balloon sticker">🎈</span><span class="key">A</span></div>
+      <div id="diamondwrap"><div class="papercard board"></div><div id="diamond">
+        <div class="friend" data-b="y" style="--c:var(--yellow);--tilt:-3deg"><div class="disc"></div><span class="emo sticker">🚕</span><span class="zzz">💤</span><span class="meter"></span><span class="balloon sticker">🎈</span><span class="tap sticker">👈</span><span class="key">Y</span></div>
+        <div class="friend" data-b="x" style="--c:var(--blue);--tilt:2deg"><div class="disc"></div><span class="emo sticker">🐳</span><span class="zzz">💤</span><span class="meter"></span><span class="balloon sticker">🎈</span><span class="tap sticker">👈</span><span class="key">X</span></div>
+        <div class="friend" data-b="b" style="--c:var(--red);--tilt:-2deg"><div class="disc"></div><span class="emo sticker">🚒</span><span class="zzz">💤</span><span class="meter"></span><span class="balloon sticker">🎈</span><span class="tap sticker">👈</span><span class="key">B</span></div>
+        <div class="friend" data-b="a" style="--c:var(--green);--tilt:3deg"><div class="disc"></div><span class="emo sticker">🦖</span><span class="zzz">💤</span><span class="meter"></span><span class="balloon sticker">🎈</span><span class="tap sticker">👈</span><span class="key">A</span></div>
         <div id="hush" class="sticker">🤫</div>
       </div></div>
       <div id="field">
@@ -441,9 +469,11 @@
         <div class="papercard"></div>
         <canvas id="paint"></canvas>
         <div id="pots"><span class="key ky" data-b="y">Y</span><span class="key kx" data-b="x">X</span><span class="key kb" data-b="b">B</span><span class="key ka" data-b="a">A</span></div>
-        <div id="next" class="mover"><div class="spot"></div><span>▶</span></div>
+        <div id="spot" class="mover"><i></i></div>
+        <div id="parrow" class="mover"><svg viewBox="-12 -12 24 24"><path d="M-9 -4 H1 V-10 L11 0 L1 10 V4 H-9Z" fill="#fff" stroke="#3d3552" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
         <div id="blob" class="mover"></div>
         <div id="car" class="mover"><span class="sticker">🚗</span></div>
+        <div id="next" class="prompt papercard"><span class="key ka">A</span><span>➜</span><span>▶</span></div>
       </div>
     </div>
   </section>
@@ -505,6 +535,7 @@
   </div>
 
   <div id="count" class="overlay t-modal" aria-hidden="true">
+    <div class="papercard"></div>
     <div class="ringbox">
       <svg viewBox="0 0 110 110"><circle class="bg" cx="55" cy="55" r="46"/><circle class="fg" cx="55" cy="55" r="46"/></svg>
       <span class="t-digit-group"><span class="t-digit" id="digit">3</span></span>
@@ -551,7 +582,7 @@ const G = {
   hold: 0, atFriend: false, side: '', want: '', row: [], cursor: 1, minusHeld: 0, minusLock: false,
   edition: saved.pad || 'green', paintUnlocked: !!saved.paint,
   rumble: true, volume: 0.5, muted: false, shy: true,
-  busyUntil: 0, target: '', lastWoken: '', presses: [], hiddenUntil: 0, readyAt: 0,
+  busyUntil: 0, target: '', lastWoken: '', lastActAt: 0, nudge: '', presses: [], hiddenUntil: 0, readyAt: 0,
   truck: { x: .5, y: .5, face: 1 }, goal: null, goalFriend: 'a', pickupAt: 0, drives: 0, lastMoveAt: 0,
 };
 // run fn later unless the game has moved to a different level/screen flow meanwhile
@@ -697,7 +728,7 @@ function allowed() {
     case 'help': return new Set(['b']);
     case 'done': return new Set(['a']);
     case 'finale': return new Set(t > G.readyAt ? ['a'] : []);
-    case 'paint': return new Set(['a', 'b', 'x', 'y', 'du', 'dd', 'dl', 'dr', 'lsm']);
+    case 'paint': return new Set(P.doneAt ? ['a'] : ['a', 'b', 'x', 'y', 'du', 'dd', 'dl', 'dr', 'lsm']);
     case 'play': switch (G.kind) {
       case 'wake': case 'peek': case 'hold': return new Set(FACE);
       case 'lr': return new Set(['dl', 'dr', 'lsm', 'a']);
@@ -715,6 +746,7 @@ const CALLOUTS = {
   title: () => ({ plus: '▶', a: '?', y: G.paintUnlocked ? '🎨' : '🔒' }),
   help: () => ({ b: '✖' }), done: () => ({ a: '▶' }),
   finale: () => now() > G.readyAt ? { a: '🏠' } : {},
+  paint: () => P.doneAt ? { a: '▶' } : {},
 };
 function refreshPad() {
   const al = allowed();
@@ -738,7 +770,8 @@ function showHome(f) {
   const el = $('#co-minus'); el.classList.toggle('is-on', f > 0);
   el.querySelector('.prog').style.strokeDashoffset = (120 * (1 - Math.min(1, f))).toFixed(1);
 }
-function setScreen(s) { G.screen = s; app.dataset.screen = s; refreshPad(); }
+function setScreen(s) { G.screen = s; app.dataset.screen = s; dirHint({}); refreshPad(); }
+function dirHint(want) { for (const n of ['du', 'dd', 'dl', 'dr']) padEl(n).classList.toggle('hint', !!want[n]); }
 
 // ---------- flow ----------
 // Browsers only allow sound after a click or key press on the page, so keep trying.
@@ -771,7 +804,7 @@ function startLevel(i) {
   leave();
   const kind = G.order[i];
   Object.assign(G, { idx: i, level: i + 1, kind, stars: 0, busyUntil: 0, hiddenUntil: 0, target: '', lastWoken: '', pickupAt: 0, drives: 0,
-    lastMoveAt: now(), presses: [], hold: 0, atFriend: false, side: '', want: '' });
+    lastMoveAt: now(), lastActAt: now(), presses: [], hold: 0, atFriend: false, side: '', want: '' });
   renderStars();
   $$('#levels b').forEach((b, k) => { b.classList.toggle('is-done', k < i); b.classList.toggle('is-now', k === i); });
   $$('.friend').forEach(f => { f.classList.remove('awake', 'peek', 'snore', 'flyaway'); f.style.setProperty('--grow', 0); });
@@ -819,11 +852,11 @@ const friendEl = b => $(`.friend[data-b="${b}"]`);
 function pickTarget() {
   let t; do { t = FACE[Math.floor(Math.random() * 4)]; } while (t === G.target);
   $$('.friend').forEach(f => f.classList.remove('peek'));
-  G.target = t; G.lastTarget = t; friendEl(t).classList.add('peek');
+  G.target = t; G.lastTarget = t; G.lastActAt = now(); friendEl(t).classList.add('peek');
 }
 function wake(b, ms) {
   const el = friendEl(b); el.classList.remove('peek'); replay(el, 'awake');
-  G.busyUntil = now() + ms; play(FRIEND[b].sound); rumble();
+  G.busyUntil = now() + ms; G.lastActAt = now() + ms; play(FRIEND[b].sound); rumble();
   later(() => el.classList.remove('awake'), ms);
 }
 function facePress(b, t) {
@@ -847,11 +880,24 @@ function facePress(b, t) {
   }
 }
 
+// when nothing has happened for a moment, a hand points at the button to press and that button pulses on the controller
+const HINT_ORDER = ['y', 'x', 'b', 'a'];
+function updateNudge(t) {
+  let b = '';
+  if (G.screen === 'play' && DIAMOND.includes(G.kind) && G.stars < STARS && t > G.busyUntil && t > G.hiddenUntil) {
+    const wait = G.kind === 'hold' ? 600 : G.kind === 'wake' ? 1500 : 3000;
+    if (t - G.lastActAt > wait) b = G.kind === 'wake' ? HINT_ORDER[(HINT_ORDER.indexOf(G.lastWoken) + 1) % 4] : G.target;
+  }
+  if (b === G.nudge) return;
+  G.nudge = b;
+  for (const n of FACE) { friendEl(n).classList.toggle('nudge', n === b); padEl(n).classList.toggle('hint', n === b); }
+}
+
 // balloon level: keep the peeking friend's button held down until the balloon is full
 function updateHold(cur, dt, t) {
   const b = G.target; if (!b || t < G.busyUntil || G.stars >= STARS) return;
   const el = friendEl(b);
-  if (cur[b]) { G.hold += dt; if (t - lastStep > 280) { rumble(0.1 + G.hold * 0.1, 120); play('step'); lastStep = t; } }
+  if (cur[b]) { G.hold += dt; G.lastActAt = t; if (t - lastStep > 280) { rumble(0.1 + G.hold * 0.1, 120); play('step'); lastStep = t; } }
   else G.hold = Math.max(0, G.hold - dt * 1.5);
   el.style.setProperty('--grow', Math.min(1, G.hold / HOLD_SECONDS).toFixed(3));
   if (G.hold >= HOLD_SECONDS) {
@@ -958,12 +1004,12 @@ function updateDrive(cur, dt, t) {
   arrow.style.transform = `translate(${tx + Math.cos(a) * off}px, ${ty + Math.sin(a) * off}px) rotate(${a}rad)`;
   arrow.classList.toggle('is-shown', idle);
   const want = { dl: gx < tx - reach / 2, dr: gx > tx + reach / 2, du: gy < ty - reach / 2, dd: gy > ty + reach / 2 };
-  for (const n in want) padEl(n).classList.toggle('hint', idle && want[n]);
+  dirHint(idle ? want : {});
 }
 
 // ---------- paint: pick a colour with Y X B A, drive the car to fill the picture ----------
 const P = { cv: $('#paint'), layer: document.createElement('canvas'), mask: document.createElement('canvas'), tmp: document.createElement('canvas'),
-  parts: [], details: [], cells: [], next: { x: .9, y: .84 }, total: 0, filled: 0, color: 'y', car: { x: .5, y: .5, face: 1 }, last: null, shape: -1, doneAt: 0, w: 0, h: 0, dpr: 1, brush: 20 };
+  parts: [], details: [], cells: [], hintCell: null, lastFillAt: 0, total: 0, filled: 0, color: 'y', car: { x: .5, y: .5, face: 1 }, last: null, shape: -1, doneAt: 0, w: 0, h: 0, dpr: 1, brush: 20 };
 const circ = (x, y, r) => { const p = new Path2D(); p.arc(x, y, r, 0, Math.PI * 2); return p; };
 const ell = (x, y, rx, ry, rot = 0) => { const p = new Path2D(); p.ellipse(x, y, rx, ry, rot, 0, Math.PI * 2); return p; };
 const poly = pts => { const p = new Path2D(); pts.forEach(([x, y], i) => i ? p.lineTo(x, y) : p.moveTo(x, y)); p.closePath(); return p; };
@@ -995,7 +1041,8 @@ function paintResize() {
 function newPicture() {
   if (!paintResize()) return;
   let i; do { i = Math.floor(Math.random() * PICTURES.length); } while (i === P.shape);
-  P.shape = i; P.doneAt = 0; P.cv.classList.remove('is-done'); P.last = null; $('#next').classList.remove('is-shown');
+  P.shape = i; P.doneAt = 0; P.hintCell = null; P.lastFillAt = now(); P.cv.classList.remove('is-done'); P.last = null;
+  $('#next').classList.remove('is-shown'); $('#paintwrap').classList.remove('is-done'); refreshPad();
   const pic = PICTURES[i](), s = Math.min(P.w * .36, P.h * .42);
   const m = new DOMMatrix().translate(P.w * .55, P.h * .5).rotate((Math.random() - .5) * 10).scale(s);
   const tr = p => { const q = new Path2D(); q.addPath(p, m); return q; };
@@ -1015,7 +1062,7 @@ function setColor(b) {
   $('#blob').style.setProperty('--pc', PAINT[b]); play('pop'); rumble(0.15, 80);
 }
 function startPaint() {
-  leave(); P.total = 0;
+  leave(); P.total = 0; P.doneAt = 0; $('#next').classList.remove('is-shown'); $('#paintwrap').classList.remove('is-done');
   scene.dataset.mode = 'paint'; setScreen('paint'); play('go');
   $$('#pots .key').forEach(k => k.classList.toggle('is-on', k.dataset.b === P.color)); $('#blob').style.setProperty('--pc', PAINT[P.color]);
   later(newPicture, 300); // after the scene has laid out
@@ -1023,7 +1070,7 @@ function startPaint() {
 function updatePaint(cur, dt, t) {
   if (!P.total) return;
   const C = P.car, d = moveDir(cur);
-  if (d.x || d.y) {
+  if (!P.doneAt && (d.x || d.y)) {
     const n = Math.hypot(d.x, d.y), v = 0.32 * dt;
     C.x = Math.max(.04, Math.min(.96, C.x + d.x / n * v)); C.y = Math.max(.06, Math.min(.94, C.y + d.y / n * v * P.w / P.h));
     if (d.x) C.face = Math.sign(d.x);
@@ -1032,18 +1079,26 @@ function updatePaint(cur, dt, t) {
   if (!P.last || P.last.x !== x || P.last.y !== y || P.last.c !== P.color) {
     lc.setTransform(P.dpr, 0, 0, P.dpr, 0, 0); lc.lineCap = 'round'; lc.lineWidth = P.brush * 2; lc.strokeStyle = PAINT[P.color];
     lc.beginPath(); lc.moveTo(P.last ? P.last.x : x, P.last ? P.last.y : y); lc.lineTo(x, y + .01); lc.stroke();
-    for (const c of P.cells) if (!c.on && Math.hypot(c.x - x, c.y - y) < P.brush * .6) { c.on = true; P.filled++; }
+    for (const c of P.cells) if (!c.on && Math.hypot(c.x - x, c.y - y) < P.brush * .85) { c.on = true; P.filled++; P.lastFillAt = t; }
     P.last = { x, y, c: P.color };
-    if (!P.doneAt && P.filled >= P.total) { // every bit is coloured: a "next" sign appears to drive to
-      P.doneAt = t; P.cv.classList.add('is-done'); play('level'); rumble(0.3, 250);
-      P.next = { x: .9, y: C.y < .5 ? .84 : .16 }; later(() => $('#next').classList.add('is-shown'), 900);
+    if (!P.doneAt && P.filled >= P.total) { // every bit is coloured: celebrate, then A moves on, the same as after a level
+      P.doneAt = t; P.cv.classList.add('is-done'); $('#paintwrap').classList.add('is-done'); play('level'); rumble(0.3, 250); refreshPad();
+      later(() => $('#next').classList.add('is-shown'), 700);
     }
   }
   const box = { width: P.w, height: P.h };
-  if (P.doneAt) {
-    place($('#next'), box, P.next.x, P.next.y);
-    if (t > P.doneAt + 900 && Math.hypot(P.next.x * P.w - x, P.next.y * P.h - y) < P.brush * 1.4) { play('go'); rumble(); G.gen++; newPicture(); return; }
+  // a white bit is left: after a quiet moment (or when nearly finished) a bright ring marks it and an arrow points the way
+  let m = null;
+  if (!P.doneAt && (P.filled >= P.total * .9 || (P.filled >= P.total * .4 && t - P.lastFillAt > 2500))) {
+    if (!P.hintCell || P.hintCell.on) { let best = 1e9; P.hintCell = null;
+      for (const k of P.cells) if (!k.on) { const dd = Math.hypot(k.x - x, k.y - y); if (dd < best) { best = dd; P.hintCell = k; } } }
+    m = P.hintCell;
   }
+  const far = m && Math.hypot(m.x - x, m.y - y) > P.brush * 1.6, a = m ? Math.atan2(m.y - y, m.x - x) : 0;
+  $('#spot').classList.toggle('is-shown', !!m); $('#parrow').classList.toggle('is-shown', !!far);
+  if (m) { $('#spot').style.transform = `translate(${m.x}px, ${m.y}px)`;
+    $('#parrow').style.transform = `translate(${x + Math.cos(a) * P.brush * 1.5}px, ${y + Math.sin(a) * P.brush * 1.5}px) rotate(${a}rad)`; }
+  dirHint(m ? { dl: m.x < x - P.brush / 2, dr: m.x > x + P.brush / 2, du: m.y < y - P.brush / 2, dd: m.y > y + P.brush / 2 } : {});
   place($('#car'), box, C.x, C.y); place($('#blob'), box, C.x, C.y); $('#car').classList.toggle('flip', C.face > 0);
   // draw: white picture, paint clipped to it, ink outlines on top
   const c = P.cv.getContext('2d'), tc = P.tmp.getContext('2d');
@@ -1056,11 +1111,6 @@ function updatePaint(cur, dt, t) {
   c.setTransform(P.dpr, 0, 0, P.dpr, 0, 0); c.strokeStyle = '#3d3552'; c.lineJoin = c.lineCap = 'round';
   c.lineWidth = Math.max(4, P.brush * .16); P.parts.forEach(p => c.stroke(p));
   c.lineWidth = Math.max(3, P.brush * .11); P.details.forEach(p => c.stroke(p));
-  if (!P.doneAt && P.filled >= P.total * .8) { // nearly there: a soft ring shows a spot still to colour
-    const m = P.cells.find(k => !k.on);
-    if (m) { c.strokeStyle = '#3d3552'; c.globalAlpha = .35 + .3 * Math.sin(t / 250); c.lineWidth = 4; c.setLineDash([6, 8]);
-      c.beginPath(); c.arc(m.x, m.y, P.brush * .7, 0, Math.PI * 2); c.stroke(); c.setLineDash([]); c.globalAlpha = 1; }
-  }
 }
 
 // ---------- one press ----------
@@ -1076,7 +1126,8 @@ function onPress(n) {
     case 'done': if (t > G.readyAt) startCountdown(); break;
     case 'finale': goTitle(); break;
     case 'paint':
-      if (FACE.includes(n)) setColor(n);
+      if (P.doneAt) { if (t > P.doneAt + 700) { play('go'); rumble(); G.gen++; newPicture(); } }
+      else if (FACE.includes(n)) setColor(n);
       break;
     case 'play':
       if (DIAMOND.includes(G.kind)) facePress(n, t);
@@ -1102,6 +1153,7 @@ function frame() {
   $('#k-rs .cap-move').setAttribute('transform', `translate(${(stick.rx * 7).toFixed(1)} ${(stick.ry * 7).toFixed(1)})`);
   if (G.screen === 'play' && FIELD.includes(G.kind)) updateDrive(cur, dt, t);
   if (G.screen === 'play' && G.kind === 'hold') updateHold(cur, dt, t);
+  updateNudge(t);
   if (cur.minus && G.screen !== 'title' && !G.minusLock) {
     G.minusHeld += dt; showHome(G.minusHeld / HOME_SECONDS);
     if (G.minusHeld >= HOME_SECONDS) { G.minusLock = true; G.minusHeld = 0; showHome(0); play('close'); goTitle(); }
@@ -1124,7 +1176,7 @@ $('#confetti').innerHTML = Array.from({ length: 36 }, (_, i) =>
   `<i style="--x:${(i * 2.77 + (i % 5) * 3) % 100}%;--c:${Object.values(PAINT)[i % 4]};--d:${5 + (i % 5)}s;--w:${-(i * .37) % 6}s;--rot:${(i % 2 ? 1 : -1) * (200 + i * 20)}deg"></i>`).join('');
 addEventListener('pointerdown', ensureAudio);
 addEventListener('resize', () => { if (G.screen === 'paint') newPicture(); });
-window.__game = { G, P, onPress, startLevel, startPaint, showFinale, jumpTo };
+window.__showDone = () => showDone(); window.__game = { G, P, onPress, startLevel, startPaint, showFinale, jumpTo };
 goTitle();
 requestAnimationFrame(frame);
 </script>
