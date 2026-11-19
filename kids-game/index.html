@@ -128,6 +128,22 @@
     78.57% { translate: var(--shake-overshoot); animation-timing-function: var(--shake-ease); }
     100%   { translate: 0; }
   }
+  /* touch screens: the picture of the controller is the controller */
+  #pad { touch-action: none; -webkit-tap-highlight-color: transparent; }
+  #padsvg .hit { fill: transparent; stroke: none; pointer-events: all; }
+  .screen { pointer-events: none; } #notices { pointer-events: auto; }
+  #app[data-touch] #pad { width: min(56cqw, 115cqh); --py: 16cqh; --ps: .82; cursor: pointer; }
+  #app[data-touch]:is([data-screen="play"], [data-screen="done"], [data-screen="count"], [data-screen="paint"], [data-screen="help"], [data-screen="settings"]) #pad { --px: 23cqw; --py: 4cqh; --ps: 1; }
+  #app[data-touch][data-screen="finale"] #pad { --px: 26cqw; --py: 20cqh; --ps: .8; }
+  #app[data-touch] :is(#topbar, #scene, .overlay) { left: 1.5cqw; width: 43cqw; }
+  #app[data-touch] #k-ls.can .halo { opacity: 0; animation: none; }
+  @container (aspect-ratio < 1.15) {
+    #app[data-touch] #pad { width: 98cqw; --py: 18cqh; --ps: 1; }
+    #app[data-touch]:is([data-screen="play"], [data-screen="done"], [data-screen="count"], [data-screen="paint"], [data-screen="help"], [data-screen="settings"]) #pad { --px: 0cqw; --py: 27cqh; --ps: 1; }
+    #app[data-touch][data-screen="finale"] #pad { --px: 0cqw; --py: 30cqh; --ps: .9; }
+    #app[data-touch] :is(#topbar, #scene, .overlay) { left: 4cqw; width: 92cqw; }
+    #app[data-touch] :is(#scene, .overlay) { bottom: 47cqh; }
+  }
   /* editions of the 8BitDo Ultimate 3C+ */
   #pad { --c-body: #f0efed; --c-edge: #d9d7d3; --c-btn: #b5b3b0; --c-btn-edge: #9b9996; --c-letter: #f6f5f3;
     --c-ring: #cfcdc9; --c-well: #dedcd8; --c-bump: #c9c7c3; --c-mark: #8f8d89; --c-small: #e3e2df; --c-small-edge: #cfcdc9; }
@@ -451,7 +467,7 @@
     font-family: var(--font-utility); color: var(--ink); }
   #settings h2 { margin: 0; font: 700 4.8cqmin var(--font-display); }
   #setrows { display: grid; align-content: start; gap: .3cqmin; }
-  .setrow { display: flex; justify-content: space-between; align-items: center; gap: 2cqmin; padding: .55cqmin 2cqmin; border-radius: 2cqmin; font-size: 3.5cqmin; line-height: 1.2; font-weight: 500;
+  .setrow { display: flex; justify-content: space-between; align-items: center; gap: 2cqmin; padding: .45cqmin 2cqmin; border-radius: 2cqmin; font-size: 3.3cqmin; line-height: 1.2; font-weight: 500;
     border: .5cqmin solid transparent; }
   .setrow.sel { background: var(--yellow); border-color: var(--ink); }
   .setrow .val { font-weight: 700; text-align: right; }
@@ -626,7 +642,7 @@ const store = {
   set(o) { try { localStorage.setItem('sleepy-friends', JSON.stringify(o)); } catch (e) {} },
 };
 const saved = store.get();
-const save = () => store.set({ paint: G.paintUnlocked, pad: G.edition, skin: G.skin, stars: G.starGoal, hint: G.hintMul, vol: G.volume, rumble: G.rumble, shy: G.shy, layout: layoutChoice, custom: G.custom });
+const save = () => store.set({ paint: G.paintUnlocked, pad: G.edition, skin: G.skin, stars: G.starGoal, hint: G.hintMul, vol: G.volume, rumble: G.rumble, shy: G.shy, layout: layoutChoice, custom: G.custom, touch: G.touchPref });
 
 const FRIEND = {
   a: { emoji: '🦖', color: '#63c886', sound: 'dino' }, b: { emoji: '🚒', color: '#f0766c', sound: 'siren' },
@@ -642,7 +658,7 @@ const G = {
   hold: 0, atFriend: false, side: '', want: '', row: [], cursor: 1, minusHeld: 0, minusLock: false,
   edition: saved.pad || 'green', paintUnlocked: !!saved.paint,
   skin: saved.skin || (saved.pad === 'white' || saved.pad === 'black' ? saved.pad : 'auto'), brand: '8bitdo',
-  starGoal: saved.stars || 5, hintMul: saved.hint || 1, custom: saved.custom || null, wiz: null, setRow: 0, bothHeld: 0, fxEl: null,
+  touchPref: saved.touch || 'auto', starGoal: saved.stars || 5, hintMul: saved.hint || 1, custom: saved.custom || null, wiz: null, setRow: 0, bothHeld: 0, fxEl: null,
   rumble: saved.rumble !== false, volume: saved.vol == null ? 0.5 : saved.vol, muted: false, shy: saved.shy !== false,
   busyUntil: 0, target: '', lastWoken: '', lastActAt: 0, nudge: '', presses: [], hiddenUntil: 0, readyAt: 0,
   truck: { x: .5, y: .5, face: 1 }, goal: null, goalFriend: 'a', pickupAt: 0, drives: 0, lastMoveAt: 0,
@@ -772,6 +788,7 @@ function getPads() {
 }
 function padNotice() {
   if (padBlocked) return '🚫 This page cannot read controllers here. Open the downloaded file instead.';
+  if (touchOn()) return '👆 Touch the buttons on the picture to play. A real controller works too.';
   return padCount ? '' : '🎮 Connect a controller, then press any button on it. No controller? Enter starts; W A S D and the arrow keys play.';
 }
 function rumble(strength = 0.25, ms = 140) {
@@ -806,6 +823,7 @@ function readInput() {
     stick.lx += ax(0); stick.ly += ax(1); stick.rx += ax(rxi[0]); stick.ry += ax(rxi[1]);
   }
   for (const k of heldKeys) if (KEYS[k]) cur[KEYS[k]] = true;
+  for (const n of touchHeld.values()) cur[n] = true;
   for (const n of tapped) cur[n] = true; tapped.clear();
   if (Math.hypot(stick.lx, stick.ly) > 0.5) cur.lsm = true;
   if (Math.hypot(stick.rx, stick.ry) > 0.5) cur.rsm = true;
@@ -838,7 +856,33 @@ addEventListener('keydown', e => {
   else if (k === 'k') { setSkin(cyc(SKINS, G.skin, 1)); }
 });
 addEventListener('keyup', e => heldKeys.delete(e.key.length === 1 ? e.key.toLowerCase() : e.key));
-addEventListener('blur', () => heldKeys.clear());
+addEventListener('blur', () => { heldKeys.clear(); touchHeld.clear(); });
+
+// ---------- touch: press the buttons on the picture ----------
+const touchHeld = new Map(), coarse = matchMedia('(pointer: coarse)');
+let sawTouch = false, touchShown = null;
+const touchOn = () => G.touchPref === 'on' || (G.touchPref !== 'off' && (coarse.matches || sawTouch) && !padCount);
+function touchName(e) {
+  const el = document.elementFromPoint(e.clientX, e.clientY); if (!el || !pad.contains(el)) return '';
+  const k = el.closest('.k'), c = el.closest('.co'), n = k ? k.id.slice(2) : c && c.classList.contains('is-on') ? c.id.slice(3) : '';
+  return n === 'ls' || n === 'rs' ? '' : n;
+}
+pad.addEventListener('pointerdown', e => {
+  if (e.pointerType === 'touch') sawTouch = true;
+  const n = touchName(e); if (!n) return;
+  e.preventDefault(); touchHeld.set(e.pointerId, n); tapped.add(n);
+});
+addEventListener('pointermove', e => { if (touchHeld.has(e.pointerId)) { const n = touchName(e); if (n) touchHeld.set(e.pointerId, n); } });
+for (const ev of ['pointerup', 'pointercancel']) addEventListener(ev, e => touchHeld.delete(e.pointerId));
+pad.addEventListener('contextmenu', e => e.preventDefault());
+function buildHits() { // generous invisible touch areas behind each drawn button
+  const NS = 'http://www.w3.org/2000/svg', add = (n, tag, at) => { const h = document.createElementNS(NS, tag); h.setAttribute('class', 'hit'); for (const k in at) h.setAttribute(k, at[k]); padEl(n).prepend(h); };
+  for (const n of ['a', 'b', 'x', 'y']) add(n, 'circle', { cx: SPOT0[n][0], cy: SPOT0[n][1], r: 17 });
+  for (const n of ['minus', 'plus', 'home']) add(n, 'circle', { cx: SPOT0[n][0], cy: SPOT0[n][1], r: 15 });
+  add('du', 'rect', { x: 145, y: 118, width: 40, height: 37 }); add('dd', 'rect', { x: 145, y: 175, width: 40, height: 37 });
+  add('dl', 'rect', { x: 118, y: 145, width: 37, height: 40 }); add('dr', 'rect', { x: 175, y: 145, width: 37, height: 40 });
+  for (const [n, x] of [['lb', 50], ['rb', 240]]) add(n, 'rect', { x, y: -12, width: 110, height: 62 });
+}
 
 // ---------- the on-screen controller ----------
 function allowed() {
@@ -1263,6 +1307,7 @@ const WIZ_STEPS = ['y', 'x', 'b', 'a', 'lb', 'rb', 'minus', 'plus'];
 const SETROWS = [
   { label: 'Controller picture', val: () => G.skin === 'auto' ? `Auto: ${padId ? (detectBrand(padId) ? 'found ' : 'not recognised, showing ') + SKIN_NAME[skinNow()] : 'no controller yet'}` : SKIN_NAME[G.skin],
     step: d => setSkin(cyc(SKINS, G.skin, d)) },
+  { label: 'Touch-screen buttons', val: () => ({ auto: `Auto (${touchOn() ? 'on' : 'off'})`, on: 'On', off: 'Off' })[G.touchPref], step: d => { G.touchPref = cyc(['auto', 'on', 'off'], G.touchPref, d); } },
   { label: 'Stars to finish a level', val: () => G.starGoal, step: d => { G.starGoal = cyc([3, 4, 5], G.starGoal, d); } },
   { label: 'Pointing hints appear', val: () => ({ .5: 'Quickly', 1: 'After a moment', 2: 'Slowly' })[G.hintMul], step: d => { G.hintMul = cyc([.5, 1, 2], G.hintMul, d); } },
   { label: 'Volume', val: () => Math.round(G.volume * 10) || 'Off', step: d => { G.volume = Math.max(0, Math.min(1, (Math.round(G.volume * 10) + d) / 10)); setVolume(); play('pop'); } },
@@ -1365,12 +1410,13 @@ function frame() {
   hud.textContent = G.note || '';
   const pn = padNotice(), np = $('#needpad'); if (np.textContent !== pn) { np.textContent = pn; np.hidden = !pn; }
   $('#needsound').hidden = soundOn();
+  if (touchOn() !== touchShown) { touchShown = touchOn(); app.toggleAttribute('data-touch', touchShown); if (G.screen === 'paint') setTimeout(() => { if (G.screen === 'paint') newPicture(); }, 600); }
   requestAnimationFrame(frame);
 }
 
 // ---------- build the static bits ----------
 $('#levels').innerHTML = KINDS.map(() => '<b></b>').join('') + '<span class="sticker cup">🏆</span>';
-buildStars(); applySkin();
+buildStars(); buildHits(); applySkin();
 const LOGO = ['var(--blue)', 'var(--red)', 'var(--yellow)', 'var(--green)'];
 $$('.logo [data-word]').forEach((line, w) => {
   line.innerHTML = [...line.dataset.word].map((ch, i) => `<i style="--lc:${LOGO[(i + w) % 4]};--r:${((i * 37 + w * 11) % 9) - 4}deg">${ch}</i>`).join('');
