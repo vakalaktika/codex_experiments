@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Sleepy Friends</title>
+<title>Press and Play</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&display=swap">
 <style>
   /* Layout: a cut-paper diorama. Scene on the left, the child's real controller
@@ -527,9 +527,9 @@
   </svg>
 
   <section id="title" class="screen">
-    <h1 class="logo t-stagger" aria-label="Sleepy Friends">
-      <span class="t-stagger-line t-stagger-line--1" data-word="Sleepy"></span>
-      <span class="t-stagger-line t-stagger-line--2" data-word="Friends"></span>
+    <h1 class="logo t-stagger" aria-label="Press and Play">
+      <span class="t-stagger-line t-stagger-line--1" data-word="Press"></span>
+      <span class="t-stagger-line t-stagger-line--2" data-word="and Play"></span>
     </h1>
     <div id="notices">
       <div id="needpad" class="papercard" hidden></div>
@@ -1468,7 +1468,7 @@ $('#levels').innerHTML = KINDS.map(() => '<b></b>').join('') + '<span class="sti
 buildStars(); buildHits(); applySkin();
 const LOGO = ['var(--blue)', 'var(--red)', 'var(--yellow)', 'var(--green)'];
 $$('.logo [data-word]').forEach((line, w) => {
-  line.innerHTML = [...line.dataset.word].map((ch, i) => `<i style="--lc:${LOGO[(i + w) % 4]};--r:${((i * 37 + w * 11) % 9) - 4}deg">${ch}</i>`).join('');
+  line.innerHTML = [...line.dataset.word].map((ch, i) => ch === ' ' ? '<i>&nbsp;</i>' : `<i style="--lc:${LOGO[(i + w) % 4]};--r:${((i * 37 + w * 11) % 9) - 4}deg">${ch}</i>`).join('');
 });
 $('#confetti').innerHTML = Array.from({ length: 36 }, (_, i) =>
   `<i style="--x:${(i * 2.77 + (i % 5) * 3) % 100}%;--c:${Object.values(PAINT)[i % 4]};--d:${5 + (i % 5)}s;--w:${-(i * .37) % 6}s;--rot:${(i % 2 ? 1 : -1) * (200 + i * 20)}deg"></i>`).join('');
