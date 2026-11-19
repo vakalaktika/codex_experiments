@@ -135,6 +135,10 @@
   #padsvg .ring { fill: var(--c-ring); stroke: var(--c-edge); stroke-width: 1; }
   #padsvg .cap { fill: var(--c-btn); stroke: var(--c-btn-edge); stroke-width: 1.5; }
   #padsvg .dimple { fill: var(--c-btn-edge); opacity: .45; }
+  #padsvg .bump.can path, #padsvg .trig.can rect { fill: var(--yellow); stroke: var(--ink); stroke-width: 3; animation: bumpglow 1.8s var(--ease-in-out) infinite; }
+  @keyframes bumpglow { 50% { fill-opacity: .55; } }
+  #padsvg .co circle.prog { fill: none; stroke: var(--green); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 120; stroke-dashoffset: 120;
+    transform-box: fill-box; transform-origin: center; transform: rotate(-90deg); filter: none; }
   #padsvg .cap.small { fill: var(--c-small); stroke: var(--c-small-edge); }
   #padsvg .arm .mark { stroke: var(--c-btn-edge); }
   #padsvg text.lt { fill: var(--c-letter); font: 700 15px var(--font-display); text-anchor: middle; dominant-baseline: central; pointer-events: none; }
@@ -169,13 +173,13 @@
 
   /* ---------- play ---------- */
   #topbar { position: absolute; left: 3cqw; top: 3cqh; width: 54cqw; height: 9cqh; display: flex; align-items: center; justify-content: space-between; }
-  #levels { display: flex; gap: 1.2cqmin; align-items: center; padding-left: 2cqmin; }
-  #levels b { display: grid; place-items: center; width: 5cqmin; height: 5cqmin; border-radius: 50%; background: var(--paper);
-    border: .5cqmin solid #fff; box-shadow: 0 .5cqmin 0 var(--shadow); font-size: 2.6cqmin; color: var(--ink); opacity: .6;
+  #levels { display: flex; gap: .9cqmin; align-items: center; padding-left: 1cqmin; }
+  #levels b { display: grid; place-items: center; width: 4cqmin; height: 4cqmin; border-radius: 50%; background: var(--paper);
+    border: .5cqmin solid #fff; box-shadow: 0 .5cqmin 0 var(--shadow); font-size: 2.1cqmin; color: var(--ink); opacity: .6;
     transition: transform var(--duration-fast) var(--ease-smooth-out), opacity var(--duration-fast) var(--ease-smooth-out), background-color var(--duration-fast) var(--ease-smooth-out); }
   #levels b.is-done { background: var(--green); opacity: 1; }
   #levels b.is-now { transform: scale(1.3); background: var(--yellow); color: var(--ink); opacity: 1; }
-  #stars { display: flex; gap: 1cqmin; font-size: 6.5cqmin; }
+  #stars { display: flex; gap: .6cqmin; font-size: 5.6cqmin; }
   #stars .sticker { opacity: .28; filter: grayscale(1); }
   #stars .sticker.on { opacity: 1; filter: drop-shadow(.04em 0 0 #fff) drop-shadow(-.04em 0 0 #fff) drop-shadow(0 .04em 0 #fff) drop-shadow(0 -.04em 0 #fff) drop-shadow(0 .06em 0 var(--shadow));
     animation: t-check-fade var(--check-opacity-dur) var(--check-ease-out) both, t-check-rotate var(--check-rotate-dur) var(--check-ease-out) both,
@@ -190,7 +194,7 @@
   #app:is([data-screen="done"], [data-screen="count"]) #scene { opacity: .4; filter: blur(var(--blur-small)); }
   #scene > div { position: absolute; inset: 0; opacity: 0; visibility: hidden;
     transition: opacity var(--duration-fast) var(--ease-smooth-out), visibility 0s linear var(--duration-fast); }
-  #scene[data-mode="diamond"] #diamondwrap, #scene[data-mode="field"] #field, #scene[data-mode="paint"] #paintwrap {
+  #scene[data-mode="diamond"] #diamondwrap, #scene[data-mode="field"] #field, #scene[data-mode="stage"] #stage, #scene[data-mode="paint"] #paintwrap {
     opacity: 1; visibility: visible; transition: opacity var(--duration-fast) var(--ease-smooth-out), visibility 0s; }
 
   /* friends diamond: same shape as the Y X B A buttons */
@@ -226,12 +230,58 @@
     transition: opacity var(--duration-fast) var(--ease-smooth-out), transform var(--duration-very-slow) var(--ease-bounce); }
 
   /* driving field */
-  #field, #paintwrap { container-type: size; }
+  #field, #paintwrap, #stage { container-type: size; }
+  #field#field[data-level="catch"] .road.h { top: 82%; }
+  #goal .zzz, #goal .key { position: absolute; display: none; }
+  #field[data-level="combo"] #goal .zzz { display: block; font-size: 5cqmin; left: 4cqmin; top: -11cqmin; animation: zzz 3s var(--ease-in-out) infinite; }
+  #field[data-level="combo"] #goal .key { display: inline-grid; font-size: 4.6cqmin; left: -13cqmin; top: -15cqmin; background: var(--c);
+    transition: transform var(--duration-very-slow) var(--ease-bounce); }
+  #field[data-level="combo"] #goal.near .key { transform: scale(1.5); }
+  #field[data-level="combo"] #goal:not(.got) .who { animation: none; opacity: .75; }
+  #field[data-level="combo"] #goal.got .zzz { display: none; }
+
+  /* balloon level: hold the button to blow it up */
+  .friend .balloon { position: absolute; left: 50%; bottom: 78%; font-size: 13cqw; translate: -50% 0; opacity: 0; transform-origin: 50% 100%;
+    transform: scale(calc(.45 + var(--grow, 0) * 1.1)); transition: opacity var(--duration-fast) var(--ease-smooth-out); }
+  #diamond[data-kind="hold"] .friend.peek .balloon { opacity: 1; }
+  .friend.flyaway .balloon { opacity: 1; animation: flyaway 1.3s var(--ease-in-out) forwards; }
+  @keyframes flyaway { to { translate: -30% -90cqh; opacity: 0; } }
+
+  /* doors and pick levels */
+  #stage .board { position: absolute; inset: 0; background: #fbeed3; }
+  #stagein { position: absolute; inset: 0; }
+  .doors { display: flex; justify-content: space-around; align-items: center; height: 100%; }
+  .door { position: relative; font-size: 36cqmin; line-height: 1; }
+  .door .leaf { display: block; position: relative; z-index: 1; transition: transform var(--duration-very-slow) var(--ease-smooth-out), opacity var(--duration-very-slow) var(--ease-smooth-out); }
+  .door .who { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-size: .5em; opacity: 0; transform: scale(.6);
+    transition: top var(--duration-very-slow) var(--ease-bounce), transform var(--duration-very-slow) var(--ease-bounce), opacity var(--duration-fast) var(--ease-smooth-out); }
+  .door.knock .who { opacity: 1; top: -14%; transform: scale(.9); }
+  .door.knock .leaf { animation: wobble 1.2s var(--ease-in-out) infinite; }
+  .door.open .leaf { transform: translateX(var(--slide)) rotate(var(--lean)); opacity: .5; }
+  .door[data-s="l"] { --slide: -55%; --lean: -6deg; } .door[data-s="r"] { --slide: 55%; --lean: 6deg; }
+  .door.open .who { opacity: 1; top: 50%; transform: scale(1.25); z-index: 2; animation: hop3 450ms var(--ease-in-out) 2 var(--duration-fast); }
+  .door.shut .leaf { animation: wobble 400ms var(--ease-in-out); }
+  @keyframes hop3 { 50% { translate: -50% -64%; } }
+  .door .key { position: absolute; z-index: 3; left: 50%; bottom: -3cqmin; translate: -50% 0; font-size: 4.6cqmin; width: auto; padding: 0 .6em; border-radius: 99px; background: var(--yellow); }
+  .want { position: absolute; left: 50%; top: 5%; translate: -50% 0; padding: 1.5cqmin 5cqmin; font-size: 15cqmin; line-height: 1; background: #fff; }
+  .want::after { content: ""; position: absolute; left: 50%; top: 100%; width: 4cqmin; height: 4cqmin; margin: 1.5cqmin 0 0 -2cqmin; border-radius: 50%; background: #fff; box-shadow: 0 .6cqmin 0 var(--shadow); }
+  .row { position: absolute; left: 0; right: 0; top: 46%; display: flex; justify-content: space-evenly; }
+  .pick { position: relative; width: 25cqmin; height: 25cqmin; }
+  .pick .disc { position: absolute; inset: 0; border-radius: 50%; background: var(--c); border: 1.2cqmin solid #fff; box-shadow: 0 1.2cqmin 0 var(--shadow); opacity: .6;
+    transition: opacity var(--duration-fast) var(--ease-smooth-out), transform var(--duration-very-slow) var(--ease-bounce), outline-color var(--duration-fast) var(--ease-smooth-out);
+    outline: 1.1cqmin solid transparent; outline-offset: .6cqmin; }
+  .pick .emo { position: absolute; left: 50%; top: 50%; translate: -50% -50%; font-size: 14cqmin; transform: scale(.8); transition: transform var(--duration-very-slow) var(--ease-bounce); }
+  .pick.sel .disc { opacity: 1; transform: scale(1.1); outline-color: var(--ink); }
+  .pick.sel .emo { transform: scale(1); }
+  .pick.sel::after { content: "👆"; position: absolute; left: 50%; top: 112%; translate: -50% 0; font-size: 9cqmin; line-height: 1; animation: bob2 1.2s var(--ease-in-out) infinite; }
+  @keyframes bob2 { 50% { translate: -50% -12%; } }
+  .pick.yes .emo { animation: hop3 450ms var(--ease-in-out) 2; }
+  .pick.no .emo { animation: wobble 400ms var(--ease-in-out); }
   #board { position: absolute; inset: 0; background: #e2f2d6; }
   .road { position: absolute; background: #cdbfae; border: .8cqmin solid #fff; border-radius: 4cqmin; box-shadow: 0 .8cqmin 0 var(--shadow); display: none; }
   .road::after { content: ""; position: absolute; inset: 0; margin: auto; background-image: linear-gradient(90deg, #fff 55%, transparent 55%); background-size: 8cqmin 100%; height: .8cqmin; }
-  #field[data-level="3"] .road.h { display: block; left: 3%; right: 3%; top: 50%; height: 16cqmin; translate: 0 -50%; }
-  #field[data-level="4"] .road.v { display: block; top: 3%; bottom: 3%; left: 50%; width: 16cqmin; translate: -50% 0; }
+  #field:is([data-level="lr"], [data-level="catch"]) .road.h { display: block; left: 3%; right: 3%; top: 50%; height: 16cqmin; translate: 0 -50%; }
+  #field[data-level="ud"] .road.v { display: block; top: 3%; bottom: 3%; left: 50%; width: 16cqmin; translate: -50% 0; }
   #field .road.v::after { background-image: linear-gradient(0deg, #fff 55%, transparent 55%); background-size: 100% 8cqmin; height: auto; width: .8cqmin; }
   .mover { position: absolute; left: 0; top: 0; will-change: transform; }
   #truck, #car { font-size: 15cqmin; }
@@ -294,12 +344,13 @@
   #count .dots i.off { opacity: .2; transform: scale(.6); }
 
   /* help: three pictures, one idea each */
-  #help .papercard { gap: 5cqmin; padding: 6cqmin 9cqmin; justify-items: start; }
+  #help .papercard { gap: 3.5cqmin; padding: 5cqmin 9cqmin; justify-items: start; }
   #help .line { display: grid; grid-template-columns: 15cqmin auto auto; align-items: center; justify-items: center; gap: 4cqmin; font-size: 6cqmin; font-weight: 700; }
   #help .line .sticker { font-size: 11cqmin; }
   #help .to { opacity: .45; }
   #help .go { font-size: 9cqmin; line-height: 1; }
   #help .line > .key { font-size: 6.5cqmin; }
+  #help .key.hold { outline: .7cqmin solid var(--green); outline-offset: .5cqmin; }
   #help .cluster { position: relative; width: 15cqmin; height: 15cqmin; }
   #help .cluster .key { position: absolute; font-size: 3.4cqmin; translate: -50% -50%; }
   #help .cluster .ky { left: 50%; top: 19%; } #help .cluster .kx { left: 19%; top: 50%; }
@@ -366,24 +417,25 @@
 
   <section id="play" class="screen">
     <div id="topbar">
-      <div id="levels" aria-hidden="true"><b>1</b><b>2</b><b>3</b><b>4</b><b>5</b></div>
+      <div id="levels" aria-hidden="true"></div>
       <div id="stars" aria-hidden="true"></div>
     </div>
     <div id="scene" data-mode="diamond">
       <div id="diamondwrap"><div id="diamond">
-        <div class="friend" data-b="y" style="--c:var(--yellow);--tilt:-3deg"><div class="disc"></div><span class="emo sticker">🚕</span><span class="zzz">💤</span><span class="key">Y</span></div>
-        <div class="friend" data-b="x" style="--c:var(--blue);--tilt:2deg"><div class="disc"></div><span class="emo sticker">🐳</span><span class="zzz">💤</span><span class="key">X</span></div>
-        <div class="friend" data-b="b" style="--c:var(--red);--tilt:-2deg"><div class="disc"></div><span class="emo sticker">🚒</span><span class="zzz">💤</span><span class="key">B</span></div>
-        <div class="friend" data-b="a" style="--c:var(--green);--tilt:3deg"><div class="disc"></div><span class="emo sticker">🦖</span><span class="zzz">💤</span><span class="key">A</span></div>
+        <div class="friend" data-b="y" style="--c:var(--yellow);--tilt:-3deg"><div class="disc"></div><span class="emo sticker">🚕</span><span class="zzz">💤</span><span class="balloon sticker">🎈</span><span class="key">Y</span></div>
+        <div class="friend" data-b="x" style="--c:var(--blue);--tilt:2deg"><div class="disc"></div><span class="emo sticker">🐳</span><span class="zzz">💤</span><span class="balloon sticker">🎈</span><span class="key">X</span></div>
+        <div class="friend" data-b="b" style="--c:var(--red);--tilt:-2deg"><div class="disc"></div><span class="emo sticker">🚒</span><span class="zzz">💤</span><span class="balloon sticker">🎈</span><span class="key">B</span></div>
+        <div class="friend" data-b="a" style="--c:var(--green);--tilt:3deg"><div class="disc"></div><span class="emo sticker">🦖</span><span class="zzz">💤</span><span class="balloon sticker">🎈</span><span class="key">A</span></div>
         <div id="hush" class="sticker">🤫</div>
       </div></div>
       <div id="field">
         <div id="board" class="papercard"></div>
         <div class="road h"></div><div class="road v"></div>
-        <div id="goal" class="mover"><div class="spot"></div><span class="sticker"></span></div>
+        <div id="goal" class="mover"><div class="spot"></div><span class="sticker who"></span><span class="zzz">💤</span><span class="key"></span></div>
         <div id="arrow" class="mover"><svg viewBox="-12 -12 24 24"><path d="M-9 -4 H1 V-10 L11 0 L1 10 V4 H-9Z" fill="#fff" stroke="#3d3552" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
         <div id="truck" class="mover"><span class="sticker">🚚</span></div>
       </div>
+      <div id="stage"><div class="papercard board"></div><div id="stagein"></div></div>
       <div id="paintwrap">
         <div class="papercard"></div>
         <canvas id="paint"></canvas>
@@ -426,7 +478,7 @@
       <g id="k-b" class="k face"><circle class="halo" cx="316" cy="94" r="17"/><g class="press"><circle class="cap" cx="316" cy="94" r="12.5"/><text class="lt" x="316" y="94.5">B</text></g></g>
       <g id="k-a" class="k face"><circle class="halo" cx="292" cy="118" r="17"/><g class="press"><circle class="cap" cx="292" cy="118" r="12.5"/><text class="lt" x="292" y="118.5">A</text></g></g>
       <g id="co-plus" class="co"><line x1="232" y1="58" x2="232" y2="8"/><circle cx="232" cy="-12" r="19"/><text x="232" y="-11"></text></g>
-      <g id="co-minus" class="co"><line x1="168" y1="58" x2="168" y2="8"/><circle cx="168" cy="-12" r="19"/><text x="168" y="-11"></text></g>
+      <g id="co-minus" class="co"><line x1="168" y1="58" x2="168" y2="8"/><circle cx="168" cy="-12" r="19"/><circle class="prog" cx="168" cy="-12" r="19"/><text x="168" y="-11">🏠</text></g>
       <g id="co-y" class="co"><line x1="304" y1="58" x2="336" y2="22"/><circle cx="350" cy="6" r="19"/><text x="350" y="7"></text></g>
       <g id="co-b" class="co"><line x1="332" y1="90" x2="366" y2="80"/><circle cx="384" cy="74" r="19"/><text x="384" y="75"></text></g>
       <g id="co-a" class="co"><line x1="306" y1="126" x2="364" y2="150"/><circle cx="384" cy="156" r="19"/><text x="384" y="157"></text></g>
@@ -439,6 +491,7 @@
       <div class="line"><span class="cluster"><span class="key ky">Y</span><span class="key kx">X</span><span class="key kb">B</span><span class="key ka">A</span></span><span class="to">➜</span><span class="sticker">🦖</span></div>
       <div class="line"><span class="dpad"></span><span class="to">➜</span><span class="sticker">🚚</span></div>
       <div class="line"><span class="key">+</span><span class="to">➜</span><span class="go">▶</span></div>
+      <div class="line"><span class="key hold">−</span><span class="to">➜</span><span class="sticker">🏠</span></div>
     </div>
   </div>
 
@@ -466,7 +519,7 @@
     <div class="prompt" id="finprompt"><span class="key ka">A</span><span>➜</span><span class="sticker">🏠</span></div>
   </section>
 
-  <div id="keys" class="papercard" hidden>Esc title · 1–5 jump to a level · 6 paint · N new picture · M mute · − + volume · R rumble · K controller colour · L button layout · H shy friends · G hide this. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Enter is +.</div>
+  <div id="keys" class="papercard" hidden>Esc title · 1–9 and 0 jump to a kind of level · P paint · N new picture · M mute · − + volume · R rumble · K controller colour · L button layout · H shy friends · G hide this. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Q and E are the bumpers, Enter is +, hold Backspace for −.</div>
   <div id="hud"></div>
   <svg class="grain" aria-hidden="true"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .24  0 0 0 0 .2  0 0 0 0 .32  0 0 0 .1 0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
 </div>
@@ -488,9 +541,13 @@ const FRIEND = {
   x: { emoji: '🐳', color: '#5aa6ec', sound: 'whale' }, y: { emoji: '🚕', color: '#f6c445', sound: 'beep' },
 };
 const FACE = ['a', 'b', 'x', 'y'];
-const STARS = 5, LEVELS = 5;
+const KINDS = ['wake', 'peek', 'lr', 'ud', 'roam', 'hold', 'doors', 'catch', 'pick', 'combo'];
+const DIAMOND = ['wake', 'peek', 'hold'], FIELD = ['lr', 'ud', 'roam', 'catch', 'combo'];
+const STARS = 5, LEVELS = KINDS.length, HOLD_SECONDS = 1.4, HOME_SECONDS = 1.2;
+const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const G = {
-  screen: 'title', level: 1, stars: 0, gen: 0,
+  screen: 'title', level: 1, stars: 0, gen: 0, order: KINDS.slice(), idx: 0, kind: 'wake',
+  hold: 0, atFriend: false, side: '', want: '', row: [], cursor: 1, minusHeld: 0, minusLock: false,
   edition: saved.pad || 'green', paintUnlocked: !!saved.paint,
   rumble: true, volume: 0.5, muted: false, shy: true,
   busyUntil: 0, target: '', lastWoken: '', presses: [], hiddenUntil: 0, readyAt: 0,
@@ -528,6 +585,7 @@ const SOUNDS = {
   nope() { tone('sine', 180, 140, 0, 0.16, 0.14); },
   yay() { seq([523, 659, 784], .14, .3, .4); },
   hush() { tone('sine', 300, 200, 0, 0.4, 0.15); },
+  knock() { tone('sine', 150, 110, 0, 0.09, 0.45); tone('sine', 150, 110, 0.2, 0.09, 0.45); },
   step() { tone('sine', 200, 180, 0, 0.06, 0.07); },
   tick() { tone('sine', 660, 660, 0, 0.12, 0.3); },
   go() { seq([523, 784], .12, .35, .4); },
@@ -547,7 +605,7 @@ const MAPS = {
   standard:  { a: 0, b: 1, x: 2, y: 3, lb: 4, rb: 5, lt: 6, rt: 7, minus: 8, plus: 9, ls: 10, rs: 11, du: 12, dd: 13, dl: 14, dr: 15, home: 16 },
   alternate: { a: 0, b: 1, x: 3, y: 4, lb: 6, rb: 7, lt: 8, rt: 9, minus: 10, plus: 11, home: 12, ls: 13, rs: 14 },
 };
-const KEYS = { w: 'y', a: 'x', s: 'a', d: 'b', ArrowUp: 'du', ArrowDown: 'dd', ArrowLeft: 'dl', ArrowRight: 'dr', Enter: 'plus', Backspace: 'minus' };
+const KEYS = { w: 'y', a: 'x', s: 'a', d: 'b', q: 'lb', e: 'rb', ArrowUp: 'du', ArrowDown: 'dd', ArrowLeft: 'dl', ArrowRight: 'dr', Enter: 'plus', Backspace: 'minus' };
 const NAMES = ['a', 'b', 'x', 'y', 'lb', 'rb', 'lt', 'rt', 'minus', 'plus', 'home', 'ls', 'rs', 'du', 'dd', 'dl', 'dr', 'lsm', 'rsm'];
 const SPOT = { a: [292, 118], b: [316, 94], x: [268, 94], y: [292, 70], minus: [168, 70], plus: [232, 70], home: [200, 68],
   ls: [128, 98], lsm: [128, 98], rs: [243, 165], rsm: [243, 165], du: [165, 143], dd: [165, 187], dl: [143, 165], dr: [187, 165],
@@ -613,8 +671,8 @@ addEventListener('keydown', e => {
   if (k.startsWith('Arrow') || k === 'Backspace') e.preventDefault();
   if (heldKeys.has(k)) return; heldKeys.add(k);
   if (KEYS[k]) { tapped.add(KEYS[k]); return; }
-  if ('12345'.includes(k)) startLevel(+k);
-  else if (k === '6') startPaint();
+  if ('1234567890'.includes(k)) jumpTo(KINDS[(+k + 9) % 10]);
+  else if (k === 'p') startPaint();
   else if (k === 'Escape' || k === '0') goTitle();
   else if (k === 'n') { if (G.screen === 'paint') { G.gen++; newPicture(); } }
   else if (k === 'r') G.rumble = !G.rumble;
@@ -637,12 +695,17 @@ function allowed() {
     case 'help': return new Set(['b']);
     case 'done': return new Set(['a']);
     case 'finale': return new Set(t > G.readyAt ? ['a'] : []);
-    case 'paint': return new Set(['a', 'b', 'x', 'y', 'du', 'dd', 'dl', 'dr', 'lsm', 'minus']);
-    case 'play':
-      if (G.level <= 2) return new Set(FACE);
-      if (G.level === 3) return new Set(['dl', 'dr', 'lsm', 'a']);
-      if (G.level === 4) return new Set(['du', 'dd', 'lsm', 'a']);
-      return new Set(['du', 'dd', 'dl', 'dr', 'lsm', 'a']);
+    case 'paint': return new Set(['a', 'b', 'x', 'y', 'du', 'dd', 'dl', 'dr', 'lsm']);
+    case 'play': switch (G.kind) {
+      case 'wake': case 'peek': case 'hold': return new Set(FACE);
+      case 'lr': return new Set(['dl', 'dr', 'lsm', 'a']);
+      case 'catch': return new Set(['dl', 'dr', 'lsm']);
+      case 'ud': return new Set(['du', 'dd', 'lsm', 'a']);
+      case 'roam': return new Set(['du', 'dd', 'dl', 'dr', 'lsm', 'a']);
+      case 'combo': return new Set(['du', 'dd', 'dl', 'dr', 'lsm', ...(G.atFriend ? [G.goalFriend] : [])]);
+      case 'doors': return new Set(['lb', 'rb', 'lt', 'rt']);
+      case 'pick': return new Set(['dl', 'dr', 'lsm', 'a']);
+    }
   }
   return new Set();
 }
@@ -650,13 +713,12 @@ const CALLOUTS = {
   title: () => ({ plus: '▶', a: '?', y: G.paintUnlocked ? '🎨' : '🔒' }),
   help: () => ({ b: '✖' }), done: () => ({ a: '▶' }),
   finale: () => now() > G.readyAt ? { a: '🏠' } : {},
-  paint: () => ({ minus: '🏠' }),
 };
 function refreshPad() {
   const al = allowed();
   for (const n of NAMES) { const el = padEl(n); if (el && n !== 'lsm' && n !== 'rsm') el.classList.toggle('can', al.has(n) || (n === 'ls' && al.has('lsm'))); }
   const co = (CALLOUTS[G.screen] || (() => ({})))();
-  for (const n of ['plus', 'minus', 'y', 'b', 'a']) {
+  for (const n of ['plus', 'y', 'b', 'a']) {
     const el = $('#co-' + n);
     if (co[n]) el.querySelector('text').textContent = co[n];
     el.classList.toggle('is-on', !!co[n]);
@@ -668,6 +730,11 @@ function nope(n) {
   const s = SPOT[n]; if (!s) return;
   const x = $('#nope'); x.setAttribute('transform', `translate(${s[0]} ${s[1]})`);
   replay(x, 'is-on'); replay(pad, 'is-shaking'); play('nope');
+}
+// hold − anywhere to go home: the bubble above − fills up while it is held
+function showHome(f) {
+  const el = $('#co-minus'); el.classList.toggle('is-on', f > 0);
+  el.querySelector('.prog').style.strokeDashoffset = (120 * (1 - Math.min(1, f))).toFixed(1);
 }
 function setScreen(s) { G.screen = s; app.dataset.screen = s; refreshPad(); }
 
@@ -692,20 +759,29 @@ function goTitle() {
 }
 function openHelp() { setScreen('help'); openModal($('#help')); play('open'); }
 function closeHelp() { closeModal($('#help')); setScreen('title'); play('close'); }
-function startGame() { play('go'); rumble(); startLevel(1); }
+function startGame() { play('go'); rumble(); G.order = shuffle(KINDS); startLevel(0); }
+function jumpTo(kind) { // grown-up shortcut: play this kind of level now, keeping the place in the run
+  const i = G.screen === 'title' || G.screen === 'paint' || G.screen === 'finale' ? 0 : G.idx, j = G.order.indexOf(kind);
+  [G.order[i], G.order[j]] = [G.order[j], G.order[i]]; startLevel(i);
+}
 function renderStars() { $$('#stars .sticker').forEach((s, i) => s.classList.toggle('on', i < G.stars)); }
-function startLevel(n) {
+function startLevel(i) {
   leave();
-  Object.assign(G, { level: n, stars: 0, busyUntil: 0, hiddenUntil: 0, target: '', lastWoken: '', pickupAt: 0, drives: 0, lastMoveAt: now(), presses: [] });
+  const kind = G.order[i];
+  Object.assign(G, { idx: i, level: i + 1, kind, stars: 0, busyUntil: 0, hiddenUntil: 0, target: '', lastWoken: '', pickupAt: 0, drives: 0,
+    lastMoveAt: now(), presses: [], hold: 0, atFriend: false, side: '', want: '' });
   renderStars();
-  $$('#levels b').forEach((b, i) => { b.classList.toggle('is-done', i < n - 1); b.classList.toggle('is-now', i === n - 1); });
-  $$('.friend').forEach(f => f.classList.remove('awake', 'peek', 'snore')); diamond.classList.remove('hush');
-  scene.dataset.mode = n <= 2 ? 'diamond' : 'field';
-  $('#field').dataset.level = n;
-  G.truck = { x: .5, y: .5, face: 1 }; G.goal = null;
+  $$('#levels b').forEach((b, k) => { b.classList.toggle('is-done', k < i); b.classList.toggle('is-now', k === i); });
+  $$('.friend').forEach(f => { f.classList.remove('awake', 'peek', 'snore', 'flyaway'); f.style.setProperty('--grow', 0); });
+  diamond.classList.remove('hush'); diamond.dataset.kind = kind;
+  scene.dataset.mode = DIAMOND.includes(kind) ? 'diamond' : FIELD.includes(kind) ? 'field' : 'stage';
+  $('#field').dataset.level = kind; $('#goal').classList.remove('near', 'got');
+  G.truck = { x: .5, y: kind === 'catch' ? .82 : .5, face: 1 }; G.goal = null;
   setScreen('play');
-  if (n === 2) later(pickTarget, 500);
-  if (n >= 3) placeGoal();
+  if (kind === 'peek' || kind === 'hold') later(pickTarget, 500);
+  if (FIELD.includes(kind)) placeGoal();
+  if (kind === 'doors') { buildDoors(); later(nextDoor, 600); }
+  if (kind === 'pick') nextPick();
 }
 function addStar() {
   G.stars++; renderStars();
@@ -724,7 +800,7 @@ function startCountdown() {
   };
   c.classList.remove('is-open'); void c.offsetHeight; openModal(c);
   beat(3); later(() => beat(2), 1000); later(() => beat(1), 2000);
-  later(() => { closeModal(c); play('go'); G.level >= LEVELS ? showFinale() : startLevel(G.level + 1); }, 3000);
+  later(() => { closeModal(c); play('go'); G.idx >= LEVELS - 1 ? showFinale() : startLevel(G.idx + 1); }, 3000);
 }
 function showFinale() {
   leave(); setScreen('finale'); G.readyAt = now() + 5000;
@@ -751,14 +827,16 @@ function wake(b, ms) {
 function facePress(b, t) {
   G.presses.push(t); G.presses = G.presses.filter(p => t - p < 1000);
   const mashing = G.presses.length >= 4;
-  if (G.level === 2 && G.shy && mashing) { // shy friends hide until the controller is quiet
+  if (G.kind === 'peek' && G.shy && mashing) { // shy friends hide until the controller is quiet
     if (t > G.hiddenUntil) play('hush');
     G.hiddenUntil = t + 1200; diamond.classList.add('hush'); return;
   }
   if (t < G.busyUntil || t < G.hiddenUntil || G.stars >= STARS) return;
-  if (G.level === 1) {
+  if (G.kind === 'wake') {
     wake(b, 1300);
     if (b !== G.lastWoken) { G.lastWoken = b; later(addStar, 400); } // a star for each new friend he tries
+  } else if (G.kind === 'hold') {
+    if (G.target && b !== G.target) { nope(b); replay(friendEl(b), 'snore'); play('snore'); G.busyUntil = t + 500; }
   } else if (b === G.target) {
     wake(b, 1500); later(() => play('yay'), 700); G.target = '';
     later(addStar, 400); later(() => { if (G.stars < STARS) pickTarget(); }, 1600);
@@ -767,22 +845,92 @@ function facePress(b, t) {
   }
 }
 
-// ---------- levels 3 to 5: driving ----------
+// balloon level: keep the peeking friend's button held down until the balloon is full
+function updateHold(cur, dt, t) {
+  const b = G.target; if (!b || t < G.busyUntil || G.stars >= STARS) return;
+  const el = friendEl(b);
+  if (cur[b]) { G.hold += dt; if (t - lastStep > 280) { rumble(0.1 + G.hold * 0.1, 120); play('step'); lastStep = t; } }
+  else G.hold = Math.max(0, G.hold - dt * 1.5);
+  el.style.setProperty('--grow', Math.min(1, G.hold / HOLD_SECONDS).toFixed(3));
+  if (G.hold >= HOLD_SECONDS) {
+    G.hold = 0; G.target = ''; el.classList.add('flyaway'); wake(b, 1500); later(() => play('yay'), 700); later(addStar, 400);
+    later(() => { el.classList.remove('flyaway'); el.style.setProperty('--grow', 0); if (G.stars < STARS) pickTarget(); }, 1800);
+  }
+}
+
+// doors level: a friend knocks behind the left or right door; the bumper on that side opens it
+function buildDoors() {
+  $('#stagein').innerHTML = '<div class="doors">' + ['l', 'r'].map(s =>
+    `<div class="door" data-s="${s}"><span class="who sticker"></span><span class="leaf sticker">🚪</span><span class="key">${s === 'l' ? 'LB' : 'RB'}</span></div>`).join('') + '</div>';
+}
+function nextDoor() {
+  G.side = Math.random() < .5 ? 'l' : 'r'; G.goalFriend = FACE[Math.floor(Math.random() * 4)];
+  $$('.door').forEach(d => d.classList.remove('knock', 'open', 'shut'));
+  const d = $(`.door[data-s="${G.side}"]`); d.querySelector('.who').textContent = FRIEND[G.goalFriend].emoji; d.classList.add('knock'); play('knock');
+}
+function doorPress(n) {
+  const t = now(), s = n === 'lb' || n === 'lt' ? 'l' : 'r'; if (t < G.busyUntil || !G.side) return;
+  const d = $(`.door[data-s="${s}"]`);
+  if (s === G.side) {
+    d.classList.remove('knock'); d.classList.add('open'); G.side = ''; G.busyUntil = t + 1500;
+    play(FRIEND[G.goalFriend].sound); later(() => play('yay'), 700); rumble(0.3, 200); later(addStar, 400);
+    later(() => { if (G.stars < STARS) nextDoor(); }, 1900);
+  } else { nope(n); replay(d, 'shut'); play('snore'); G.busyUntil = t + 500; }
+}
+
+// pick level: move the hand with the D-pad to the friend in the bubble, then press A
+function nextPick() {
+  const row = shuffle(FACE).slice(0, 3), prevWant = G.want; let w;
+  do { w = Math.floor(Math.random() * 3); } while (row[w] === prevWant);
+  G.row = row; G.want = row[w]; G.cursor = (w + 1 + Math.floor(Math.random() * 2)) % 3;
+  $('#stagein').innerHTML = `<div class="want papercard"><span class="sticker">${FRIEND[G.want].emoji}</span></div><div class="row">` +
+    row.map(b => `<div class="pick" style="--c:${FRIEND[b].color}"><div class="disc"></div><span class="emo sticker">${FRIEND[b].emoji}</span></div>`).join('') + '</div>';
+  renderCursor();
+}
+function renderCursor() { $$('.pick').forEach((p, i) => p.classList.toggle('sel', i === G.cursor)); }
+function pickPress(n) {
+  const t = now(); if (!G.want || t < G.busyUntil) return;
+  if (n === 'a') {
+    const el = $$('.pick')[G.cursor];
+    if (G.row[G.cursor] === G.want) {
+      el.classList.add('yes'); play(FRIEND[G.want].sound); G.want = '_'; G.busyUntil = t + 1500;
+      later(() => play('yay'), 700); rumble(0.3, 200); later(addStar, 400);
+      later(() => { if (G.stars < STARS) { G.want = G.row[G.cursor]; nextPick(); } }, 1900);
+    } else { nope('a'); replay(el, 'no'); play('snore'); G.busyUntil = t + 500; }
+  } else {
+    const dir = n === 'dl' ? -1 : n === 'dr' ? 1 : Math.sign(Math.round(stick.lx)), c = Math.max(0, Math.min(2, G.cursor + dir));
+    if (c !== G.cursor) { G.cursor = c; renderCursor(); play('pop'); rumble(0.1, 50); }
+  }
+}
+
+// ---------- driving levels ----------
 function placeGoal() {
   G.goalFriend = FACE[Math.floor(Math.random() * 4)];
   const far = v => v < .5 ? .86 : .14, T = G.truck;
-  if (G.level === 3) G.goal = { x: G.drives < 2 ? (T.x < .5 ? .86 : .14) : far(T.x), y: .5 };
-  else if (G.level === 4) G.goal = { x: .5, y: far(T.y) };
+  const k = G.kind;
+  if (k === 'lr') G.goal = { x: G.drives < 2 ? (T.x < .5 ? .86 : .14) : far(T.x), y: .5 };
+  else if (k === 'ud') G.goal = { x: .5, y: far(T.y) };
+  else if (k === 'catch') { let x; do { x = .12 + Math.random() * .76; } while (Math.abs(x - T.x) < .2); G.goal = { x, y: .1 }; }
   else { let g; do { g = { x: .14 + Math.random() * .72, y: .16 + Math.random() * .68 }; } while (Math.hypot(g.x - T.x, g.y - T.y) < .34); G.goal = g; }
-  const el = $('#goal'); el.classList.remove('got');
-  el.style.setProperty('--c', FRIEND[G.goalFriend].color); el.querySelector('.sticker').textContent = FRIEND[G.goalFriend].emoji;
+  const el = $('#goal'); el.classList.remove('got', 'near');
+  el.style.setProperty('--c', FRIEND[G.goalFriend].color); el.querySelector('.who').textContent = FRIEND[G.goalFriend].emoji;
+  el.querySelector('.key').textContent = G.goalFriend.toUpperCase();
 }
 let lastStep = 0;
+function pickup(t) {
+  G.pickupAt = t; G.drives++; $('#goal').classList.add('got');
+  play(FRIEND[G.goalFriend].sound); later(() => play('yay'), 700); rumble(0.3, 200); addStar();
+  later(() => { G.pickupAt = 0; if (G.stars < STARS) placeGoal(); }, 1700);
+}
+function comboPress(n) {
+  if (G.atFriend && n === G.goalFriend && !G.pickupAt) { G.atFriend = false; $('#goal').classList.remove('near'); pickup(now()); refreshPad(); }
+}
 function place(el, box, x, y) { el.style.transform = `translate(${x * box.width}px, ${y * box.height}px)`; }
 function updateDrive(cur, dt, t) {
   const box = $('#field').getBoundingClientRect(); if (!box.width) return;
   const T = G.truck, d = moveDir(cur);
-  if (G.level === 3) d.y = 0; if (G.level === 4) d.x = 0;
+  const k = G.kind;
+  if (k === 'lr' || k === 'catch') d.y = 0; if (k === 'ud') d.x = 0;
   if (!G.pickupAt && G.stars < STARS && (d.x || d.y)) {
     const n = Math.hypot(d.x, d.y), v = 0.3 * dt;
     T.x = Math.max(.08, Math.min(.92, T.x + d.x / n * v));
@@ -793,17 +941,17 @@ function updateDrive(cur, dt, t) {
   }
   place($('#truck'), box, T.x, T.y); $('#truck').classList.toggle('flip', T.face > 0);
   const g = G.goal; if (!g) return;
+  if (k === 'catch' && !G.pickupAt && G.stars < STARS) { g.y += 0.14 * dt; if (g.y > T.y + .04) g.y = .1; } // a miss just floats back up
   const gx = g.x * box.width, gy = g.y * box.height, tx = T.x * box.width, ty = T.y * box.height;
   const reach = Math.min(box.width, box.height) * .15;
-  if (!G.pickupAt && G.stars < STARS && Math.hypot(gx - tx, gy - ty) < reach) {
-    G.pickupAt = t; G.drives++; $('#goal').classList.add('got');
-    play(FRIEND[G.goalFriend].sound); later(() => play('yay'), 700); rumble(0.3, 200); addStar();
-    later(() => { G.pickupAt = 0; if (G.stars < STARS) placeGoal(); }, 1700);
-  }
+  const near = !G.pickupAt && G.stars < STARS && Math.hypot(gx - tx, gy - ty) < reach * (k === 'combo' ? 1.5 : 1);
+  if (k === 'combo') { // drive up to the sleeping friend, then press its button
+    if (near !== G.atFriend) { G.atFriend = near; $('#goal').classList.toggle('near', near); refreshPad(); if (near) play('pop'); }
+  } else if (near) pickup(t);
   if (G.pickupAt) $('#goal').style.transform = `translate(${tx}px, ${ty - reach * .9}px)`;
   else place($('#goal'), box, g.x, g.y);
   // after a quiet moment, point the way on the board and on the controller
-  const idle = !G.pickupAt && G.stars < STARS && t - G.lastMoveAt > 2500;
+  const idle = !G.pickupAt && !G.atFriend && G.stars < STARS && t - G.lastMoveAt > 2500;
   const a = Math.atan2(gy - ty, gx - tx), arrow = $('#arrow'), off = reach * 1.1;
   arrow.style.transform = `translate(${tx + Math.cos(a) * off}px, ${ty + Math.sin(a) * off}px) rotate(${a}rad)`;
   arrow.classList.toggle('is-shown', idle);
@@ -917,7 +1065,7 @@ function updatePaint(cur, dt, t) {
 function onPress(n) {
   const t = now();
   ensureAudio();
-  if (G.screen === 'count') return;
+  if (n === 'minus' || G.screen === 'count') return;
   if (G.screen === 'finale' && t < G.readyAt) return;
   if (!allowed().has(n)) { nope(n); return; } // a red X on the button he pressed
   switch (G.screen) {
@@ -926,10 +1074,13 @@ function onPress(n) {
     case 'done': if (t > G.readyAt) startCountdown(); break;
     case 'finale': goTitle(); break;
     case 'paint':
-      if (FACE.includes(n)) setColor(n); else if (n === 'minus') goTitle();
+      if (FACE.includes(n)) setColor(n);
       break;
     case 'play':
-      if (G.level <= 2) facePress(n, t);
+      if (DIAMOND.includes(G.kind)) facePress(n, t);
+      else if (G.kind === 'combo') comboPress(n);
+      else if (G.kind === 'doors') doorPress(n);
+      else if (G.kind === 'pick') pickPress(n);
       else if (n === 'a' && t > G.busyUntil) { G.busyUntil = t + 700; play('beep'); rumble(0.15, 100); }
   }
 }
@@ -947,7 +1098,12 @@ function frame() {
   prev = cur;
   $('#k-ls .cap-move').setAttribute('transform', `translate(${(stick.lx * 7).toFixed(1)} ${(stick.ly * 7).toFixed(1)})`);
   $('#k-rs .cap-move').setAttribute('transform', `translate(${(stick.rx * 7).toFixed(1)} ${(stick.ry * 7).toFixed(1)})`);
-  if (G.screen === 'play' && G.level >= 3) updateDrive(cur, dt, t);
+  if (G.screen === 'play' && FIELD.includes(G.kind)) updateDrive(cur, dt, t);
+  if (G.screen === 'play' && G.kind === 'hold') updateHold(cur, dt, t);
+  if (cur.minus && G.screen !== 'title' && !G.minusLock) {
+    G.minusHeld += dt; showHome(G.minusHeld / HOME_SECONDS);
+    if (G.minusHeld >= HOME_SECONDS) { G.minusLock = true; G.minusHeld = 0; showHome(0); play('close'); goTitle(); }
+  } else { if (!cur.minus) G.minusLock = false; if (G.minusHeld) { G.minusHeld = 0; showHome(0); } }
   if (G.screen === 'paint') updatePaint(cur, dt, t);
   if (diamond.classList.contains('hush') && t > G.hiddenUntil) diamond.classList.remove('hush');
   hud.textContent = `${soundOn() ? '' : '🔇 Click the page once for sound · '}G grown-up keys · ${padStatus()} · layout ${layoutShown} · last button #${lastRaw}${G.muted ? ' · muted' : ''}${G.rumble ? '' : ' · rumble off'}${G.shy ? '' : ' · shy off'}`;
@@ -956,6 +1112,7 @@ function frame() {
 
 // ---------- build the static bits ----------
 pad.dataset.edition = G.edition;
+$('#levels').innerHTML = KINDS.map((_, i) => `<b>${i + 1}</b>`).join('');
 $('#stars').innerHTML = '<span class="sticker">⭐</span>'.repeat(STARS);
 const LOGO = ['var(--blue)', 'var(--red)', 'var(--yellow)', 'var(--green)'];
 $$('.logo [data-word]').forEach((line, w) => {
@@ -965,7 +1122,7 @@ $('#confetti').innerHTML = Array.from({ length: 36 }, (_, i) =>
   `<i style="--x:${(i * 2.77 + (i % 5) * 3) % 100}%;--c:${Object.values(PAINT)[i % 4]};--d:${5 + (i % 5)}s;--w:${-(i * .37) % 6}s;--rot:${(i % 2 ? 1 : -1) * (200 + i * 20)}deg"></i>`).join('');
 addEventListener('pointerdown', ensureAudio);
 addEventListener('resize', () => { if (G.screen === 'paint') newPicture(); });
-window.__game = { G, P, onPress, startLevel, startPaint, showFinale };
+window.__game = { G, P, onPress, startLevel, startPaint, showFinale, jumpTo };
 goTitle();
 requestAnimationFrame(frame);
 </script>
