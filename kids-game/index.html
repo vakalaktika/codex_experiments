@@ -147,13 +147,14 @@
   #padsvg .k .press { transform-box: fill-box; transform-origin: center;
     transition: transform var(--duration-micro) var(--ease-out), filter var(--duration-micro) var(--ease-out); }
   #padsvg .k.down .press { transform: translateY(1.5px) scale(.9); filter: brightness(.8); }
-  #padsvg .halo { fill: none; stroke: var(--hc, #fff); stroke-width: 5; opacity: 0;
+  #padsvg .halo { fill: none; stroke: var(--hc, #fff); stroke-width: 6.5; opacity: 0;
+    filter: drop-shadow(1.3px 0 0 var(--he, #fff)) drop-shadow(-1.3px 0 0 var(--he, #fff)) drop-shadow(0 1.3px 0 var(--he, #fff)) drop-shadow(0 -1.3px 0 var(--he, #fff));
     transform-box: fill-box; transform-origin: center; transition: opacity var(--duration-fast) var(--ease-smooth-out); }
   #padsvg .k.can .halo { opacity: 1; animation: halo 1.8s var(--ease-in-out) infinite; }
-  #padsvg .k.can.hint .halo { animation-duration: .9s; stroke-width: 7; }
-  @keyframes halo { 50% { transform: scale(1.12); opacity: .55; } }
+  #padsvg .k.can.hint .halo { animation-duration: .9s; stroke-width: 9; }
+  @keyframes halo { 50% { transform: scale(1.12); opacity: .75; } }
   #k-a { --hc: var(--green); } #k-b { --hc: var(--red); } #k-x { --hc: var(--blue); } #k-y { --hc: var(--yellow); }
-  #k-plus, #k-minus, #k-ls, #k-du, #k-dd, #k-dl, #k-dr { --hc: var(--ink); }
+  #k-plus, #k-minus, #k-ls, #k-du, #k-dd, #k-dl, #k-dr { --hc: #fff; --he: var(--ink); }
   #padsvg .co { opacity: 0; transform-box: fill-box; transform-origin: center; transform: scale(.6);
     transition: opacity var(--duration-quick) var(--ease-smooth-out), transform var(--duration-quick) var(--ease-smooth-out); }
   #padsvg .co.is-on { opacity: 1; transform: scale(1);
