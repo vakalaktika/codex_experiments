@@ -90,6 +90,13 @@
   #title > * { transition: opacity var(--duration-fast) var(--ease-smooth-out); }
   #app[data-screen="help"] #title > * { opacity: .25; }
 
+  #notices { position: absolute; left: 3cqw; top: 36cqh; width: 25cqw; display: grid; gap: 2cqmin; }
+  #notices .papercard { padding: 2cqmin 2.4cqmin; border-radius: 3cqmin; font: 600 2.7cqmin/1.35 var(--font-utility); color: var(--ink); text-align: left; }
+  #needsound { background: var(--yellow); cursor: pointer; }
+  #needsound:focus-visible { outline: .6cqmin solid var(--ink); outline-offset: .4cqmin; }
+  #notices [hidden] { display: none; }
+  @container (aspect-ratio < 1.15) { #notices { top: 22cqh; left: 4cqw; width: 92cqw; } }
+
   /* texts reveal (transitions.dev 18) */
   .t-stagger-line { display: block; opacity: 0; transform: translateY(var(--stagger-distance)); filter: blur(var(--stagger-blur));
     transition: opacity var(--stagger-dur) var(--stagger-ease), transform var(--stagger-dur) var(--stagger-ease), filter var(--stagger-dur) var(--stagger-ease);
@@ -132,7 +139,7 @@
     --c-ring: #c9c9c5; --c-well: #e2e2de; --c-bump: #dcdcd8; --c-mark: #77777c; --c-small: #2b2b2f; --c-small-edge: #111114; }
   #pad[data-edition="xbox"] #k-a text.lt { fill: #7ed957; } #pad[data-edition="xbox"] #k-b text.lt { fill: #ff6b5e; }
   #pad[data-edition="xbox"] #k-x text.lt { fill: #5fb0ff; } #pad[data-edition="xbox"] #k-y text.lt { fill: #ffd24a; }
-  #pad[data-edition="xbox"] .small.press + .mark, #pad[data-edition="switch"] .small.press + .mark { stroke: #e9e9ec; }
+  #pad[data-edition="xbox"] :is(#k-minus, #k-plus) .mark, #pad[data-edition="switch"] .small.press ~ .mark { stroke: #e9e9ec; }
   #pad[data-edition="ps"] { --c-body: #f4f5f7; --c-edge: #cfd3da; --c-btn: #fbfbfc; --c-btn-edge: #c3c8d0; --c-letter: #6f7682;
     --c-ring: #2a2c31; --c-well: #e3e6eb; --c-bump: #e9ebef; --c-mark: #8c93a0; --c-small: #fbfbfc; --c-small-edge: #c3c8d0; --c-stick: #232428; --c-stick-edge: #0f1012; }
   #pad[data-edition="switch"] { --c-body: #3a3d42; --c-edge: #26282c; --c-btn: #25272a; --c-btn-edge: #121315; --c-letter: #e6e7ea;
@@ -141,10 +148,12 @@
   #pad[data-edition="ps"] :is(.arm .cap, .face .cap) { stroke: #9aa1ad; }
   #padsvg .touch { fill: #1d1e22; stroke: var(--c-edge); stroke-width: 1.5; }
   #pad:not([data-brand="8bitdo"]) .only-8bitdo, #pad:not([data-brand="ps"]) .only-ps, #pad:not([data-brand="8bitdo"]) .led { display: none; }
-  /* PlayStation: D-pad on top, left stick below, small buttons beside the touchpad */
-  #pad[data-brand="ps"] #k-ls { transform: translate(37px, 67px); } #pad[data-brand="ps"] #dpadg { transform: translate(-37px, -67px); }
-  #pad[data-brand="ps"] :is(#k-minus, #co-minus) { translate: -18px -14px; } #pad[data-brand="ps"] :is(#k-plus, #co-plus) { translate: 18px -14px; }
-  #pad[data-brand="ps"] #k-home { translate: 4px 97px; }
+  #pad:not([data-brand="xbox"]) .only-xbox, #pad:not([data-brand="switch"]) .only-switch,
+  #pad:is([data-brand="xbox"], [data-brand="ps"]) .m-pm, #pad:not(:is([data-brand="xbox"], [data-brand="ps"])) .m-menu,
+  #pad:not([data-brand="8bitdo"]) .grip { display: none; }
+  #padsvg .console { fill: #1d1e22; }
+  #pad[data-brand="xbox"] #k-home .cap { fill: #fff; stroke: #b9b9b5; } #pad[data-brand="xbox"] #k-home .mark { stroke: #55555a; }
+  #pad[data-brand="xbox"] #k-home { scale: 1.25; transform-box: fill-box; transform-origin: center; }
   #padsvg .body { fill: var(--c-body); stroke: var(--c-edge); stroke-width: 2.5; }
   #padsvg .grip { fill: var(--c-edge); opacity: .35; }
   #padsvg .bump path, #padsvg .trig rect { fill: var(--c-bump); stroke: var(--c-edge); stroke-width: 1.5; }
@@ -437,17 +446,18 @@
   #fx .sticker { position: absolute; left: 0; top: 0; font-size: 5.2cqmin; }
 
   /* grown-up settings: the one screen with words */
-  #settings .papercard { position: absolute; inset: 0; background: #fffdf6; padding: 3cqmin 4cqmin; display: grid; grid-template-rows: auto 1fr auto; gap: 1.6cqmin;
+  #settings { top: 3cqh; bottom: 3cqh; width: 56cqw; }
+  #settings .papercard { position: absolute; inset: 0; background: #fffdf6; padding: 2.4cqmin 3.4cqmin; display: grid; grid-template-rows: auto 1fr auto; gap: 1.2cqmin;
     font-family: var(--font-utility); color: var(--ink); }
-  #settings h2 { margin: 0; font: 700 4.6cqmin var(--font-display); }
-  #setrows { display: grid; align-content: start; gap: .5cqmin; }
-  .setrow { display: flex; justify-content: space-between; align-items: center; gap: 2cqmin; padding: .8cqmin 2cqmin; border-radius: 2cqmin; font-size: 2.9cqmin; font-weight: 500;
+  #settings h2 { margin: 0; font: 700 4.8cqmin var(--font-display); }
+  #setrows { display: grid; align-content: start; gap: .3cqmin; }
+  .setrow { display: flex; justify-content: space-between; align-items: center; gap: 2cqmin; padding: .55cqmin 2cqmin; border-radius: 2cqmin; font-size: 3.5cqmin; line-height: 1.2; font-weight: 500;
     border: .5cqmin solid transparent; }
   .setrow.sel { background: var(--yellow); border-color: var(--ink); }
   .setrow .val { font-weight: 700; text-align: right; }
-  #sethelp { margin: 0; font-size: 2.2cqmin; line-height: 1.45; }
-  .wiz { display: grid; justify-items: center; align-content: center; gap: 3cqmin; height: 100%; font-size: 3.6cqmin; font-weight: 600; text-align: center; }
-  .wiz .key { font-size: 9cqmin; background: var(--yellow); }
+  #sethelp { margin: 0; font-size: 2.6cqmin; line-height: 1.4; white-space: pre-line; }
+  .wiz { display: grid; justify-items: center; align-content: center; gap: 4cqmin; height: 100%; font-size: 4.6cqmin; font-weight: 600; text-align: center; }
+  .wiz .key { font-size: 13cqmin; background: var(--yellow); }
 
   /* grown-up strip */
   #hud { position: absolute; left: max(10px, env(safe-area-inset-left, 0px)); bottom: 6px; z-index: 55; font: 11px var(--font-utility); color: var(--ink); opacity: .55; pointer-events: none; }
@@ -478,6 +488,10 @@
       <span class="t-stagger-line t-stagger-line--1" data-word="Sleepy"></span>
       <span class="t-stagger-line t-stagger-line--2" data-word="Friends"></span>
     </h1>
+    <div id="notices">
+      <div id="needpad" class="papercard" hidden></div>
+      <button id="needsound" class="papercard" hidden>🔇 Click here once to turn the sound on</button>
+    </div>
     <div class="title-friends" aria-hidden="true">
       <span class="sticker">🐳</span><span class="sticker">🚕</span><span class="sticker">🦖</span><span class="sticker">🚒</span>
     </div>
@@ -526,6 +540,7 @@
       <path class="body" d="M100 38 C140 30 260 30 300 38 C335 44 350 70 356 110 C364 160 372 215 358 258 C350 280 326 280 316 262 C304 238 292 212 270 206 L130 206 C108 212 96 238 84 262 C74 280 50 280 42 258 C28 215 36 160 44 110 C50 70 65 44 100 38 Z"/>
       <path class="grip" d="M44 150 C36 200 34 235 42 258 C50 280 74 280 84 262 C92 246 100 228 112 216 C84 222 60 200 44 150 Z"/>
       <path class="grip" d="M356 150 C364 200 366 235 358 258 C350 280 326 280 316 262 C308 246 300 228 288 216 C316 222 340 200 356 150 Z"/>
+      <path class="only-ps console" d="M150 112 H250 C264 112 280 134 282 162 C284 188 270 204 258 204 H142 C130 204 116 188 118 162 C120 134 136 112 150 112 Z"/>
       <g id="k-ls" class="k stick"><circle class="halo" cx="128" cy="98" r="35"/><circle class="ring" cx="128" cy="98" r="30"/><circle class="well" cx="128" cy="98" r="25"/>
         <g class="cap-move"><g class="press"><circle class="cap" cx="128" cy="98" r="21"/><circle class="dimple" cx="128" cy="98" r="13"/></g></g></g>
       <g id="k-rs" class="k stick"><circle class="ring" cx="243" cy="165" r="30"/><circle class="well" cx="243" cy="165" r="25"/>
@@ -536,11 +551,13 @@
       <g id="k-dl" class="k arm"><path class="halo" d="M154 154 H134 a5 5 0 0 0 -5 5 v12 a5 5 0 0 0 5 5 H154Z"/><path class="cap press" d="M156 154 H134 a5 5 0 0 0 -5 5 v12 a5 5 0 0 0 5 5 H156Z"/><path class="mark" d="M140 161 l-5 4 l5 4Z"/></g>
       <g id="k-dr" class="k arm"><path class="halo" d="M176 154 H196 a5 5 0 0 1 5 5 v12 a5 5 0 0 1 -5 5 H176Z"/><path class="cap press" d="M174 154 H196 a5 5 0 0 1 5 5 v12 a5 5 0 0 1 -5 5 H174Z"/><path class="mark" d="M190 161 l5 4 l-5 4Z"/></g>
       <rect class="cap" x="154" y="154" width="22" height="22" stroke="none"/><circle class="dimple" cx="165" cy="165" r="4"/></g>
-      <rect class="only-ps touch" x="162" y="44" width="76" height="46" rx="9"/>
-      <g id="k-minus" class="k"><circle class="halo" cx="168" cy="70" r="12"/><circle class="cap small press" cx="168" cy="70" r="8"/><path class="mark" d="M164 70 h8"/></g>
+      <rect class="only-ps touch" x="157" y="46" width="86" height="56" rx="10"/>
+      <rect class="only-xbox cap small" x="194" y="112" width="12" height="7" rx="3.5"/>
+      <rect class="only-switch cap small" x="170" y="90" width="12" height="12" rx="2.5"/>
+      <g id="k-minus" class="k"><circle class="halo" cx="168" cy="70" r="12"/><circle class="cap small press" cx="168" cy="70" r="8"/><path class="mark m-pm" d="M164 70 h8"/><path class="mark only-xbox" d="M164.5 67.5 h5 v4 h-5Z M167 71.5 v1.5 h5 v-4 h-2.5"/><path class="mark only-ps" d="M168 66.5 v2.5 M164.6 68.4 l1.6 1.9 M171.4 68.4 l-1.6 1.9"/></g>
       <g id="k-home" class="k"><circle class="led" cx="200" cy="68" r="12"/><circle class="cap small press" cx="200" cy="68" r="9"/>
-        <path class="mark" d="M196 65 h.1 M200 65 h.1 M204 65 h.1 M198 68.5 h.1 M202 68.5 h.1 M200 72 h.1" stroke-width="2.2"/></g>
-      <g id="k-plus" class="k"><circle class="halo" cx="232" cy="70" r="12"/><circle class="cap small press" cx="232" cy="70" r="8"/><path class="mark" d="M228 70 h8 M232 66 v8"/></g>
+        <path class="mark only-8bitdo" d="M196 65 h.1 M200 65 h.1 M204 65 h.1 M198 68.5 h.1 M202 68.5 h.1 M200 72 h.1" stroke-width="2.2"/><path class="mark only-xbox" d="M195.5 63.5 Q200 68 204.5 72.5 M204.5 63.5 Q200 68 195.5 72.5" stroke-width="2.4"/><path class="mark only-switch" d="M195.5 68.5 L200 64 L204.5 68.5 V72.5 H195.5Z"/></g>
+      <g id="k-plus" class="k"><circle class="halo" cx="232" cy="70" r="12"/><circle class="cap small press" cx="232" cy="70" r="8"/><path class="mark m-pm" d="M228 70 h8 M232 66 v8"/><path class="mark m-menu" d="M228.5 67 h7 M228.5 70 h7 M228.5 73 h7"/></g>
       <g class="only-8bitdo"><circle class="cap small" cx="182" cy="97" r="7"/><rect class="mark" x="179" y="94" width="6" height="6" rx="1"/></g>
       <circle class="only-8bitdo" cx="200" cy="99" r="1.6" fill="var(--c-mark)"/>
       <g class="only-8bitdo"><circle class="cap small" cx="218" cy="97" r="7"/><path class="mark" d="M218 93.2 l1.2 2.6 2.8 .3 -2.1 1.9 .6 2.8 -2.5 -1.4 -2.5 1.4 .6 -2.8 -2.1 -1.9 2.8 -.3Z"/></g>
@@ -617,7 +634,7 @@ const FRIEND = {
 };
 const FACE = ['a', 'b', 'x', 'y'];
 const KINDS = ['wake', 'peek', 'lr', 'ud', 'roam', 'hold', 'doors', 'catch', 'pick', 'combo'];
-const DIAMOND = ['wake', 'peek', 'hold'], FIELD = ['lr', 'ud', 'roam', 'catch', 'combo'];
+const EASY_START = ['wake', 'peek', 'lr'], DIAMOND = ['wake', 'peek', 'hold'], FIELD = ['lr', 'ud', 'roam', 'catch', 'combo'];
 const LEVELS = KINDS.length, HOLD_SECONDS = 1.4, HOME_SECONDS = 1.2;
 const shuffle = a => { a = a.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; };
 const G = {
@@ -711,11 +728,33 @@ function skinNow() {
 }
 function applySkin() {
   const sk = skinNow(); G.brand = BRAND[sk] ? sk : '8bitdo';
-  pad.dataset.edition = sk; pad.dataset.brand = G.brand;
+  pad.dataset.edition = sk; pad.dataset.brand = G.brand; applyLayout();
   for (const el of $$('[data-k]')) el.textContent = lab(el.dataset.k);
 }
-const PS_SHIFT = { ls: [37, 67], lsm: [37, 67], du: [-37, -67], dd: [-37, -67], dl: [-37, -67], dr: [-37, -67], minus: [-18, -14], plus: [18, -14], home: [4, 97] };
-const SPOT = new Proxy(SPOT0, { get: (o, n) => { const p = o[n], d = G.brand === 'ps' && PS_SHIFT[n]; return p && d ? [p[0] + d[0], p[1] + d[1]] : p; } });
+// where each part sits on each brand's controller (the drawing itself is laid out for the 8BitDo)
+const BASE = { ls: [128, 98], dpad: [165, 165], rs: [243, 165], face: [292, 94], minus: [168, 70], plus: [232, 70], home: [200, 68] };
+const LAYOUT = {
+  '8bitdo': { ...BASE, body: 'M100 38 C140 30 260 30 300 38 C335 44 350 70 356 110 C364 160 372 215 358 258 C350 280 326 280 316 262 C304 238 292 212 270 206 L130 206 C108 212 96 238 84 262 C74 280 50 280 42 258 C28 215 36 160 44 110 C50 70 65 44 100 38 Z' },
+  xbox: { ls: [122, 100], dpad: [162, 160], rs: [238, 160], face: [290, 100], minus: [177, 98], plus: [223, 98], home: [200, 68],
+    body: 'M96 40 C128 30 150 34 166 46 L234 46 C250 34 272 30 304 40 C338 48 352 80 362 130 C374 190 386 240 368 268 C354 288 328 282 314 256 C300 230 286 206 262 200 L138 200 C114 206 100 230 86 256 C72 282 46 288 32 268 C14 240 26 190 38 130 C48 80 62 48 96 40 Z' },
+  ps: { ls: [160, 160], dpad: [112, 98], rs: [240, 160], face: [288, 98], minus: [144, 60], plus: [256, 60], home: [200, 166],
+    body: 'M92 42 C120 32 150 36 160 40 L240 40 C250 36 280 32 308 42 C340 50 352 84 360 130 C370 190 376 240 362 270 C350 292 322 288 312 262 C302 236 296 214 272 206 L128 206 C104 214 98 236 88 262 C78 288 50 292 38 270 C24 240 30 190 40 130 C48 84 60 50 92 42 Z' },
+  switch: { ls: [120, 96], dpad: [162, 160], rs: [240, 160], face: [294, 96], minus: [156, 62], plus: [244, 62], home: [224, 96],
+    body: 'M100 36 C140 26 260 26 300 36 C336 42 356 72 362 114 C370 166 374 222 358 258 C348 282 322 280 312 258 C302 238 292 216 268 210 L132 210 C108 216 98 238 88 258 C78 280 52 282 42 258 C26 222 30 166 38 114 C44 72 64 42 100 36 Z' },
+};
+const PART = { ls: 'ls', lsm: 'ls', rs: 'rs', rsm: 'rs', du: 'dpad', dd: 'dpad', dl: 'dpad', dr: 'dpad', a: 'face', b: 'face', x: 'face', y: 'face', minus: 'minus', plus: 'plus', home: 'home' };
+function shift(n) { const p = PART[n], L = LAYOUT[G.brand]; return p ? [L[p][0] - BASE[p][0], L[p][1] - BASE[p][1]] : [0, 0]; }
+const SPOT = new Proxy(SPOT0, { get: (o, n) => { const p = o[n], d = shift(n); return p ? [p[0] + d[0], p[1] + d[1]] : p; } });
+function applyLayout() {
+  const L = LAYOUT[G.brand], mv = (sel, n) => { const d = shift(n); for (const e of $$(sel)) e.style.translate = `${d[0]}px ${d[1]}px`; };
+  mv('#k-ls', 'ls'); mv('#dpadg', 'du'); mv('#k-rs', 'rs'); mv('#k-a, #k-b, #k-x, #k-y, #co-y, #co-b, #co-a', 'a'); mv('#k-minus', 'minus'); mv('#k-plus', 'plus'); mv('#k-home', 'home');
+  for (const n of ['plus', 'minus']) { // the bubbles above the two small buttons follow them
+    const [x, y] = L[n], g = $('#co-' + n), ln = g.querySelector('line');
+    ln.setAttribute('x1', x); ln.setAttribute('x2', x); ln.setAttribute('y1', y - 12); ln.setAttribute('y2', 8);
+    for (const c of g.querySelectorAll('circle')) c.setAttribute('cx', x); g.querySelector('text').setAttribute('x', x);
+  }
+  $('#padsvg .body').setAttribute('d', L.body);
+}
 const padEl = n => $('#k-' + (n === 'lsm' ? 'ls' : n === 'rsm' ? 'rs' : n));
 let layoutChoice = saved.layout || 'auto', layoutShown = 'standard', padBlocked = false, padCount = 0, lastRaw = '-', padId = '', shownPadId = null;
 // buttons the grown-up taught the game replace the built-in numbers
@@ -731,9 +770,9 @@ function getPads() {
   try { return navigator.getGamepads ? [...navigator.getGamepads()].filter(Boolean) : []; }
   catch (e) { padBlocked = true; return []; }
 }
-function padStatus() {
-  if (padBlocked) return '🚫 This page cannot read controllers. Use the downloaded file instead.';
-  return padCount ? '🎮 Controller connected' : '🎮 No controller seen yet. Press any button on it.';
+function padNotice() {
+  if (padBlocked) return '🚫 This page cannot read controllers here. Open the downloaded file instead.';
+  return padCount ? '' : '🎮 Connect a controller, then press any button on it. No controller? Enter starts; W A S D and the arrow keys play.';
 }
 function rumble(strength = 0.25, ms = 140) {
   if (!G.rumble) return;
@@ -876,7 +915,7 @@ function goTitle() {
 }
 function openHelp() { setScreen('help'); openModal($('#help')); play('open'); }
 function closeHelp() { closeModal($('#help')); setScreen('title'); play('close'); }
-function startGame() { play('go'); rumble(); G.order = shuffle(KINDS); startLevel(0); }
+function startGame() { play('go'); rumble(); G.order = [...EASY_START, ...shuffle(KINDS.filter(k => !EASY_START.includes(k)))]; startLevel(0); }
 function jumpTo(kind) { // grown-up shortcut: play this kind of level now, keeping the place in the run
   const i = G.screen === 'title' || G.screen === 'paint' || G.screen === 'finale' ? 0 : G.idx, j = G.order.indexOf(kind);
   [G.order[i], G.order[j]] = [G.order[j], G.order[i]]; startLevel(i);
@@ -1233,6 +1272,7 @@ const SETROWS = [
   { label: 'Teach the game my buttons', val: () => G.custom ? 'Learned ▶' : 'Start ▶', act: () => { G.wiz = { i: 0, steps: WIZ_STEPS, got: {}, readyAt: now() + 400 }; } },
   { label: 'Forget learned buttons', val: () => G.custom ? '▶' : 'Nothing learned', act: () => { G.custom = null; } },
   { label: 'Lock paint again', val: () => !G.paintUnlocked ? 'Locked' : G.confirm ? 'Press again to lock' : 'Unlocked ▶', act: () => { if (G.confirm) { G.paintUnlocked = false; G.confirm = false; } else if (G.paintUnlocked) G.confirm = true; } },
+  { label: 'Keyboard keys', val: () => G.showKeys ? 'Shown below' : 'Show ▶', act: () => { G.showKeys = !G.showKeys; } },
   { label: 'Close', val: () => '▶', act: () => closeSettings() },
 ];
 function renderSettings() {
@@ -1242,8 +1282,8 @@ function renderSettings() {
     ? `<div class="wiz"><span>Press this button on the controller</span><span class="key">${lab(w.steps[w.i])}</span><span>${w.i + 1} of ${w.steps.length}</span></div>`
     : SETROWS.map((r, i) => `<div class="setrow${i === G.setRow ? ' sel' : ''}"><span>${r.label}</span><span class="val">${r.step ? '◀ ' : ''}${r.val()}${r.step ? ' ▶' : ''}</span></div>`).join('');
   $('#sethelp').textContent = w ? 'The button to press is also lit on the picture. Esc on the keyboard cancels.'
-    : `D-pad up/down chooses, left/right changes, ${lab('a')} selects, ${lab('b')} closes. Open this screen any time by holding ${lab('minus')} and ${lab('plus')} together, or with G on the keyboard. ` +
-      `Controller reports: ${padId || 'none connected'} · last button #${lastRaw}. Keyboard: Esc title, 1–9 and 0 jump to a level, P paint, N new picture, M mute; W A S D are the four buttons, arrows the D-pad, Q E the bumpers, Enter and Backspace the two small buttons.`;
+    : G.showKeys ? 'Keyboard: Esc title · 1–9 and 0 jump to a level · P paint · N new picture · M mute · W A S D are the four buttons · arrows are the D-pad · Q E the bumpers · Enter and Backspace the two small buttons'
+    : `D-pad chooses and changes · ${lab('a')} selects · ${lab('b')} closes · hold ${lab('minus')} and ${lab('plus')} to open this screen\nController: ${padId || 'none connected'} · last button #${lastRaw}`;
 }
 function openSettings() { leave(); G.setRow = 0; G.confirm = false; setScreen('settings'); openModal($('#settings')); renderSettings(); play('open'); }
 function closeSettings() { save(); play('close'); goTitle(); }
@@ -1272,7 +1312,7 @@ function onPress(n) {
   if (G.screen === 'finale' && t < G.readyAt) return;
   if (!allowed().has(n)) { nope(n); return; } // a red X on the button he pressed
   switch (G.screen) {
-    case 'title': if (n === 'plus') startGame(); else if (n === 'a') openHelp(); else startPaint(); break;
+    case 'title': if (n === 'plus') G.plusAt = t; else if (n === 'a') openHelp(); else startPaint(); break;
     case 'help': closeHelp(); break;
     case 'settings': settingsPress(n); break;
     case 'done': if (t > G.readyAt) startCountdown(); break;
@@ -1308,8 +1348,12 @@ function frame() {
   if (G.screen === 'play' && FIELD.includes(G.kind)) updateDrive(cur, dt, t);
   if (G.screen === 'play' && G.kind === 'hold') updateHold(cur, dt, t);
   updateNudge(t);
+  if (G.plusAt) {
+    if (cur.minus || G.screen !== 'title') G.plusAt = 0;
+    else if (!cur.plus || t - G.plusAt > 250) { G.plusAt = 0; startGame(); }
+  }
   if (G.wiz) { /* every button belongs to the teaching screen */ }
-  else if (cur.minus && cur.plus && G.screen !== 'settings' && !G.minusLock) {
+  else if (cur.minus && cur.plus && G.screen !== 'settings' && !G.minusLock) { G.plusAt = 0;
     G.bothHeld += dt; G.minusHeld = 0; showHome(G.bothHeld / HOME_SECONDS, '⚙');
     if (G.bothHeld >= HOME_SECONDS) { G.minusLock = true; G.bothHeld = 0; showHome(0); openSettings(); }
   } else if (cur.minus && !cur.plus && G.screen !== 'title' && G.screen !== 'settings' && !G.minusLock) {
@@ -1318,7 +1362,9 @@ function frame() {
   } else { if (!cur.minus) G.minusLock = false; if (G.minusHeld || G.bothHeld) { G.minusHeld = G.bothHeld = 0; showHome(0); } }
   if (G.screen === 'paint') updatePaint(cur, dt, t);
   if (diamond.classList.contains('hush') && t > G.hiddenUntil) diamond.classList.remove('hush');
-  hud.textContent = `${G.note || ''}${soundOn() ? '' : '🔇 Click the page once for sound · '}Grown-ups: hold ${lab('minus')} and ${lab('plus')}, or press G · ${padStatus()} · layout ${layoutShown} · last button #${lastRaw}${G.muted ? ' · muted' : ''}${G.rumble ? '' : ' · rumble off'}${G.shy ? '' : ' · shy off'}`;
+  hud.textContent = G.note || '';
+  const pn = padNotice(), np = $('#needpad'); if (np.textContent !== pn) { np.textContent = pn; np.hidden = !pn; }
+  $('#needsound').hidden = soundOn();
   requestAnimationFrame(frame);
 }
 
