@@ -519,7 +519,7 @@
     <div class="prompt" id="finprompt"><span class="key ka">A</span><span>➜</span><span class="sticker">🏠</span></div>
   </section>
 
-  <div id="keys" class="papercard" hidden>Esc title · 1–9 and 0 jump to a kind of level · P paint · N new picture · M mute · − + volume · R rumble · K controller colour · L button layout · H shy friends · G hide this. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Q and E are the bumpers, Enter is +, hold Backspace for −.</div>
+  <div id="keys" class="papercard" hidden>Esc title · 1–9 and 0 jump to a kind of level · P paint · N new picture · M mute · − + volume · R rumble · Shift+R reset and lock paint · K controller colour · L button layout · H shy friends · G hide this. Keyboard play: W A S D are Y X A B, arrows are the D-pad, Q and E are the bumpers, Enter is +, hold Backspace for −.</div>
   <div id="hud"></div>
   <svg class="grain" aria-hidden="true"><filter id="grainf"><feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" seed="4"/><feColorMatrix values="0 0 0 0 .24  0 0 0 0 .2  0 0 0 0 .32  0 0 0 .1 0"/></filter><rect width="100%" height="100%" filter="url(#grainf)"/></svg>
 </div>
@@ -675,6 +675,7 @@ addEventListener('keydown', e => {
   else if (k === 'p') startPaint();
   else if (k === 'Escape' || k === '0') goTitle();
   else if (k === 'n') { if (G.screen === 'paint') { G.gen++; newPicture(); } }
+  else if (k === 'r' && e.shiftKey) { G.paintUnlocked = false; save(); G.note = '🔒 Game reset: paint is locked again · '; setTimeout(() => { G.note = ''; }, 4000); goTitle(); }
   else if (k === 'r') G.rumble = !G.rumble;
   else if (k === 'm') { G.muted = !G.muted; setVolume(); }
   else if (k === '-' || k === '_') { G.volume = Math.max(0.1, G.volume - 0.1); setVolume(); }
@@ -1106,7 +1107,7 @@ function frame() {
   } else { if (!cur.minus) G.minusLock = false; if (G.minusHeld) { G.minusHeld = 0; showHome(0); } }
   if (G.screen === 'paint') updatePaint(cur, dt, t);
   if (diamond.classList.contains('hush') && t > G.hiddenUntil) diamond.classList.remove('hush');
-  hud.textContent = `${soundOn() ? '' : '🔇 Click the page once for sound · '}G grown-up keys · ${padStatus()} · layout ${layoutShown} · last button #${lastRaw}${G.muted ? ' · muted' : ''}${G.rumble ? '' : ' · rumble off'}${G.shy ? '' : ' · shy off'}`;
+  hud.textContent = `${G.note || ''}${soundOn() ? '' : '🔇 Click the page once for sound · '}G grown-up keys · ${padStatus()} · layout ${layoutShown} · last button #${lastRaw}${G.muted ? ' · muted' : ''}${G.rumble ? '' : ' · rumble off'}${G.shy ? '' : ' · shy off'}`;
   requestAnimationFrame(frame);
 }
 
